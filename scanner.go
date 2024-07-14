@@ -1,5 +1,15 @@
 package main
 
+/*
+ * TODO: comments support
+ * TODO: we're duplicating some effort in parsing scalars
+ *	(integers, floats): we identify them here, but actually
+ *	parse them in the parser. Perhaps we could parse them
+ *	here already, which would imply wasting a few token{} bytes.
+ *
+ *	For now set aside to focus on more interesting things.
+ */
+
 import (
 	"fmt"
 	"io"
