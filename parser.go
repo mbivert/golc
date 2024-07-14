@@ -29,6 +29,7 @@ var opPrecs = map[tokenKind]int {
 	tokenFPlus   : precAdd,
 	tokenFMinus  : precAdd,
 	tokenFStar   : precMul,
+	tokenFSlash  : precMul,
 
 	tokenFMore   : precCmp,
 	tokenFLess   : precCmp,
@@ -130,7 +131,7 @@ type AppExpr struct {
 }
 
 // TODO: have a specifc Operator type instead of tokenKind?
-type UnaryOpExpr struct {
+type UnaryExpr struct {
 	expr
 	op    tokenKind
 	right Expr
@@ -248,10 +249,10 @@ func (p *parser) parenExpr() Expr {
 	return e
 }
 
-func (p *parser) unaryOpExpr() *UnaryOpExpr {
+func (p *parser) unaryOpExpr() *UnaryExpr {
 	o := p.tok.kind
 	p.next()
-	return &UnaryOpExpr{expr{}, o, p.expr()}
+	return &UnaryExpr{expr{}, o, p.expr()}
 }
 
 func (p *parser) xvar() *VarExpr {

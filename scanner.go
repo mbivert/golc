@@ -66,6 +66,9 @@ var many = map[string]tokenKind {
 	// XXX those were in twos, but aren't two ascii char long.
 	"≤."     : tokenFLessEq,
 	"≥."     : tokenFMoreEq,
+	// XXX those were missing (untested thus)
+	"<=."    : tokenFLessEq,
+	">=."    : tokenFMoreEq,
 	"lambda" : tokenLambda,
 	"let"    : tokenLet,
 	"in"     : tokenIn,

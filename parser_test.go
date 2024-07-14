@@ -88,7 +88,7 @@ func TestTypelessParse(t *testing.T) {
 			parse,
 			[]interface{}{strings.NewReader("  - 12"), ""},
 			[]interface{}{
-				&UnaryOpExpr{expr{}, tokenMinus, &IntExpr{expr{}, 12}},
+				&UnaryExpr{expr{}, tokenMinus, &IntExpr{expr{}, 12}},
 				nil,
 			},
 		},
@@ -97,7 +97,7 @@ func TestTypelessParse(t *testing.T) {
 			parse,
 			[]interface{}{strings.NewReader("  +. 12"), ""},
 			[]interface{}{
-				&UnaryOpExpr{expr{}, tokenFPlus, &IntExpr{expr{}, 12}},
+				&UnaryExpr{expr{}, tokenFPlus, &IntExpr{expr{}, 12}},
 				nil,
 			},
 		},
@@ -106,10 +106,10 @@ func TestTypelessParse(t *testing.T) {
 			parse,
 			[]interface{}{strings.NewReader("  ++. 12"), ""},
 			[]interface{}{
-				&UnaryOpExpr{
+				&UnaryExpr{
 					expr{},
 					tokenPlus,
-					&UnaryOpExpr{expr{}, tokenFPlus, &IntExpr{expr{}, 12}},
+					&UnaryExpr{expr{}, tokenFPlus, &IntExpr{expr{}, 12}},
 				},
 				nil,
 			},
@@ -140,16 +140,16 @@ func TestTypelessParse(t *testing.T) {
 			parse,
 			[]interface{}{strings.NewReader("  +.(  -  (-.-1234.45)\t) "), ""},
 			[]interface{}{
-				&UnaryOpExpr{
+				&UnaryExpr{
 					expr{},
 					tokenFPlus,
-					&UnaryOpExpr{
+					&UnaryExpr{
 						expr{},
 						tokenMinus,
-						&UnaryOpExpr{
+						&UnaryExpr{
 							expr{},
 							tokenFMinus,
-							&UnaryOpExpr{
+							&UnaryExpr{
 								expr{},
 								tokenMinus,
 								&FloatExpr{expr{}, 1234.45},

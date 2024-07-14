@@ -8,8 +8,12 @@ parser-tests: tokenkind_string.go
 	@echo Running parser tests...
 	@go test -v parser_test.go parser.go scanner.go ftests.go tokenkind.go tokenkind_string.go
 
+eval-tests: tokenkind_string.go
+	@echo Running eval tests...
+	@go test -v eval_test.go eval.go parser.go scanner.go ftests.go tokenkind.go tokenkind_string.go
+
 .PHONY: tests
-tests: scanner-tests parser-tests
+tests: scanner-tests parser-tests eval-tests
 
 tokenkind_string.go: tokenkind.go
 	@echo Generating $@...
