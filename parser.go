@@ -4,7 +4,7 @@ import (
 	"io"
 	"fmt"
 	"unicode"
-//	"strings"
+	"strings"
 )
 
 const (
@@ -364,4 +364,13 @@ func parse(in io.Reader, fn string) (Expr, error) {
 		err = p.errHeref("Unexpected token: %s", p.tok.kind.String())
 	}
 	return e, err
+}
+
+// For eval_test.go and utils_test.go so far.
+func mustParse(s string) Expr {
+	e, err := parse(strings.NewReader(s), "")
+	if err != nil {
+		panic(err)
+	}
+	return e
 }

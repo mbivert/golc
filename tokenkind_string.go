@@ -35,23 +35,27 @@ func _() {
 	_ = x[tokenMore-24]
 	_ = x[tokenFLess-25]
 	_ = x[tokenFMore-26]
-	_ = x[tokenColon-27]
-	_ = x[tokenPi-28]
-	_ = x[tokenArrow-29]
-	_ = x[tokenProduct-30]
-	_ = x[tokenLet-31]
-	_ = x[tokenIn-32]
-	_ = x[tokenRec-33]
-	_ = x[tokenMatch-34]
-	_ = x[tokenWith-35]
-	_ = x[tokenIf-36]
-	_ = x[tokenThen-37]
-	_ = x[tokenElse-38]
+	_ = x[tokenAndAnd-27]
+	_ = x[tokenOrOr-28]
+	_ = x[tokenColon-29]
+	_ = x[tokenPi-30]
+	_ = x[tokenArrow-31]
+	_ = x[tokenProduct-32]
+	_ = x[tokenLet-33]
+	_ = x[tokenIn-34]
+	_ = x[tokenRec-35]
+	_ = x[tokenMatch-36]
+	_ = x[tokenWith-37]
+	_ = x[tokenIf-38]
+	_ = x[tokenThen-39]
+	_ = x[tokenElse-40]
+	_ = x[tokenNew-41]
+	_ = x[tokenMeas-42]
 }
 
-const _tokenKind_name = "EOFerrornameλ().float64int64bool!+-*/≥≤+.-.*./.≥.≤.<><.>.:π→×letinrecmatchwithifthenelse"
+const _tokenKind_name = "EOFerrornameλ().float64int64bool!+-*/≥≤+.-.*./.≥.≤.<><.>.&&||:π→×letinrecmatchwithifthenelsenewmeas"
 
-var _tokenKind_index = [...]uint8{0, 3, 8, 12, 14, 15, 16, 17, 24, 29, 33, 34, 35, 36, 37, 38, 41, 44, 46, 48, 50, 52, 56, 60, 61, 62, 64, 66, 67, 69, 72, 74, 77, 79, 82, 87, 91, 93, 97, 101}
+var _tokenKind_index = [...]uint8{0, 3, 8, 12, 14, 15, 16, 17, 24, 29, 33, 34, 35, 36, 37, 38, 41, 44, 46, 48, 50, 52, 56, 60, 61, 62, 64, 66, 68, 70, 71, 73, 76, 78, 81, 83, 86, 91, 95, 97, 101, 105, 108, 112}
 
 func (i tokenKind) String() string {
 	if i >= tokenKind(len(_tokenKind_index)-1) {

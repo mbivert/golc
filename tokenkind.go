@@ -42,6 +42,9 @@ const (
 	tokenFLess      // <.
 	tokenFMore      // >.
 
+	tokenAndAnd     // &&
+	tokenOrOr       // ||
+
 	// Extensions see [Selinger2009]
 	tokenColon      // :
 	tokenPi         // π
@@ -59,4 +62,7 @@ const (
 	tokenIf         // if
 	tokenThen       // then
 	tokenElse       // else
+
+	tokenNew        // new
+	tokenMeas       // meas
 )

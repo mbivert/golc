@@ -58,6 +58,11 @@ var ones = map[rune]tokenKind {
 	'→' : tokenArrow,
 	'λ'  : tokenLambda,
 	'π'  : tokenPi,
+//	'⊸'  : tokenRMultiMap,
+//	'⊗'  : tokenOMult,
+//	'⊕'  : tokenOPlus,
+//	'⊤'  : tokenTrue,
+//	'!'  : tokenExclamation,
 }
 
 // two ascii characters long (so far) tokens
@@ -69,6 +74,8 @@ var twos = map[string]tokenKind {
 	"<." : tokenFLess,
 	">." : tokenFMore,
 	"->" : tokenArrow,
+	"&&" : tokenAndAnd,
+	"||" : tokenOrOr,
 }
 
 // special names
@@ -79,6 +86,10 @@ var many = map[string]tokenKind {
 	// XXX those were missing (untested thus)
 	"<=."    : tokenFLessEq,
 	">=."    : tokenFMoreEq,
+	// XXX and/or untested
+	"and"    : tokenAndAnd,
+	"or"     : tokenOrOr,
+
 	"lambda" : tokenLambda,
 	"let"    : tokenLet,
 	"in"     : tokenIn,
@@ -88,6 +99,12 @@ var many = map[string]tokenKind {
 	"pi"     : tokenPi,
 	"true"   : tokenBool,
 	"false"  : tokenBool,
+	// Untested. We're also missing all our gates:
+	//	H (Hadamard) N (not) Vtheta (phase shift)
+	//	X (exchange) N_C (controlled not)
+	//	two more Pauli besides (not)?
+//	"new"    : tokenNew,
+//	"meas"   : tokenMeas,
 }
 
 func isSep(r rune) bool {
