@@ -17,6 +17,35 @@ var T = &AbsExpr{
 	},
 }
 
+// False
+var F = &AbsExpr{
+	expr{},
+	"x",
+	&AbsExpr{
+		expr{},
+		"y",
+		&VarExpr{expr{}, "y"},
+	},
+}
+
+var and = &AbsExpr{
+	expr{},
+	"x",
+	&AbsExpr{
+		expr{},
+		"y",
+		&AppExpr{
+			expr{},
+			&AppExpr{
+				expr{},
+				&VarExpr{expr{}, "x"},
+				&VarExpr{expr{}, "y"},
+			},
+			F,
+		},
+	},
+}
+
 func TestMergeMaps(t *testing.T) {
 	doTests(t, []test{
 		{
@@ -151,6 +180,7 @@ func TestallVars(t *testing.T) {
 	})
 }
 
+// TODO: a bit light
 func TestPrettyPrint(t *testing.T) {
 	doTests(t, []test{
 		{
@@ -181,7 +211,7 @@ func TestPrettyPrint(t *testing.T) {
 			"simple abstraction (id)",
 			prettyPrint,
 			[]interface{}{mustParse("λ x. x")},
-			[]interface{}{"(λx.x)"},
+			[]interface{}{"(λx. x)"},
 		},
 		{
 			"arithmetic",
@@ -190,10 +220,22 @@ func TestPrettyPrint(t *testing.T) {
 			[]interface{}{"((2 + 2) * 3)"},
 		},
 		{
-			"Imbricated abstraction (gets \"simplified\") + application",
+			"imbricated abstraction + application",
 			prettyPrint,
-			[]interface{}{mustParse("λx.λy. x y")},
-			[]interface{}{"(λx.y.(x y))"},
+			[]interface{}{mustParse("λx. y. x y")},
+			[]interface{}{"(λx. y. (x y))"},
+		},
+		{
+			"and",
+			prettyPrint,
+			[]interface{}{and},
+			[]interface{}{"(λx. y. (x y (λx. y. y)))"},
+		},
+		{
+			"(((x y) q) (z p))",
+			prettyPrint,
+			[]interface{}{mustParse("(((x y) q) (z p))")},
+			[]interface{}{"(x y q (z p))"},
 		},
 	})
 }

@@ -23,6 +23,9 @@ var T = &AbsExpr{
  *	https://github.com/mbivert/nix-series-code/blob/master/lambda/parse_test.nix
  *	https://github.com/mbivert/nix-series-code/blob/master/exprs_test.nix
  *
+ * Many more tests to import from:
+ *	https://github.com/mbivert/nix-series-code/blob/master/lambda_test.nix
+ *
  * We're focusing here on basic lambda calculus extended with some
  * scalar types (eg. bool, int, float) and basic arithmetic operations.
  *

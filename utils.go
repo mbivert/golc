@@ -68,11 +68,11 @@ func prettyPrint(x Expr) string {
 			return x.(*VarExpr).name
 		case *AbsExpr:
 			if inAbs {
-				return fmt.Sprintf("%s.%s",
+				return fmt.Sprintf("%s. %s",
 					x.(*AbsExpr).bound,
 					aux(x.(*AbsExpr).right, true, false))
 			} else {
-				return fmt.Sprintf("(λ%s.%s)",
+				return fmt.Sprintf("(λ%s. %s)",
 					x.(*AbsExpr).bound,
 					aux(x.(*AbsExpr).right, true, false))
 			}
@@ -87,8 +87,7 @@ func prettyPrint(x Expr) string {
 					aux(x.(*AppExpr).right, false, false))
 			}
 
-		// TODO: I'm sure we can do better for those two, but
-		// that's secondary for now.
+		// TODO: I'm sure we can do better for those two
 		case *UnaryExpr:
 			return fmt.Sprintf("%s (%s)",
 				x.(*UnaryExpr).op,
