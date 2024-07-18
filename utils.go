@@ -1,6 +1,8 @@
 package main
 
 import (
+	"fmt"
+	"strconv"
 )
 
 // Add n entries to m; returns m
@@ -57,6 +59,55 @@ func allVars(x Expr) map[string]bool {
 	}
 }
 
-func prettyPrint(x Expr) {
-	x = x
+func prettyPrint(x Expr) string {
+	var aux func(Expr, bool, bool) string
+
+	aux = func(x Expr, inAbs, inApp bool) string {
+		switch x.(type) {
+		case *VarExpr:
+			return x.(*VarExpr).name
+		case *AbsExpr:
+			if inAbs {
+				return fmt.Sprintf("%s.%s",
+					x.(*AbsExpr).bound,
+					aux(x.(*AbsExpr).right, true, false))
+			} else {
+				return fmt.Sprintf("(λ%s.%s)",
+					x.(*AbsExpr).bound,
+					aux(x.(*AbsExpr).right, true, false))
+			}
+		case *AppExpr:
+			if inApp {
+				return fmt.Sprintf("%s %s",
+					aux(x.(*AppExpr).left, false, true),
+					aux(x.(*AppExpr).right, false, false))
+			} else {
+				return fmt.Sprintf("(%s %s)",
+					aux(x.(*AppExpr).left, false, true),
+					aux(x.(*AppExpr).right, false, false))
+			}
+
+		// TODO: I'm sure we can do better for those two, but
+		// that's secondary for now.
+		case *UnaryExpr:
+			return fmt.Sprintf("%s (%s)",
+				x.(*UnaryExpr).op,
+				aux(x.(*UnaryExpr).right, false, false))
+		case *BinaryExpr:
+			return fmt.Sprintf("(%s %s %s)",
+				prettyPrint(x.(*BinaryExpr).left),
+				x.(*BinaryExpr).op,
+				aux(x.(*BinaryExpr).right, false, false))
+
+		case *IntExpr:
+			return strconv.FormatInt(x.(*IntExpr).v, 10)
+		case *FloatExpr:
+			return strconv.FormatFloat(x.(*FloatExpr).v, 'g', -1, 64)
+		case *BoolExpr:
+			return strconv.FormatBool(x.(*BoolExpr).v)
+		default:
+			panic("O__o") // TODO
+		}
+	}
+	return aux(x, false, false)
 }

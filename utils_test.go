@@ -150,3 +150,50 @@ func TestallVars(t *testing.T) {
 		},
 	})
 }
+
+func TestPrettyPrint(t *testing.T) {
+	doTests(t, []test{
+		{
+			"bare int",
+			prettyPrint,
+			[]interface{}{mustParse("123")},
+			[]interface{}{"123"},
+		},
+		{
+			"bare float",
+			prettyPrint,
+			[]interface{}{mustParse("123.42")},
+			[]interface{}{"123.42"},
+		},
+		{
+			"bare bool",
+			prettyPrint,
+			[]interface{}{mustParse("true")},
+			[]interface{}{"true"},
+		},
+		{
+			"bare variable",
+			prettyPrint,
+			[]interface{}{mustParse("someVar")},
+			[]interface{}{"someVar"},
+		},
+		{
+			"simple abstraction (id)",
+			prettyPrint,
+			[]interface{}{mustParse("λ x. x")},
+			[]interface{}{"(λx.x)"},
+		},
+		{
+			"arithmetic",
+			prettyPrint,
+			[]interface{}{mustParse("(2+2)*3")},
+			[]interface{}{"((2 + 2) * 3)"},
+		},
+		{
+			"Imbricated abstraction (gets \"simplified\") + application",
+			prettyPrint,
+			[]interface{}{mustParse("λx.λy. x y")},
+			[]interface{}{"(λx.y.(x y))"},
+		},
+	})
+}

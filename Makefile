@@ -19,7 +19,7 @@ utils-tests: tokenkind_string.go
 	@go test -v utils_test.go utils.go parser.go scanner.go ftests.go tokenkind.go tokenkind_string.go
 
 .PHONY: tests
-tests: scanner-tests parser-tests eval-tests utils-tests.go
+tests: scanner-tests parser-tests eval-tests utils-tests
 
 tokenkind_string.go: tokenkind.go
 	@echo Generating $@...
