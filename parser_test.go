@@ -49,6 +49,18 @@ func TestTypelessParse(t *testing.T) {
 			[]interface{}{&IntExpr{expr{}, 1234}, nil},
 		},
 		{
+			"single (int)",
+			parse,
+			[]interface{}{strings.NewReader("  (1234)"), ""},
+			[]interface{}{&IntExpr{expr{}, 1234}, nil},
+		},
+		{
+			"single ((int))",
+			parse,
+			[]interface{}{strings.NewReader("  ((1234))"), ""},
+			[]interface{}{&IntExpr{expr{}, 1234}, nil},
+		},
+		{
 			"single float",
 			parse,
 			[]interface{}{strings.NewReader("  1234.45 "), ""},

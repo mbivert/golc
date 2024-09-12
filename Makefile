@@ -15,7 +15,7 @@ eval-tests: tokenkind_string.go
 
 .PHONY: utils-tests
 utils-tests: tokenkind_string.go
-	@echo Running eval tests...
+	@echo Running utils tests...
 	@go test -v utils_test.go utils.go parser.go scanner.go ftests.go tokenkind.go tokenkind_string.go
 
 .PHONY: tests

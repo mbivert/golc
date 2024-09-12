@@ -21,3 +21,15 @@ implementation.
 [benoit-valiron-thesis]: https://theses.hal.science/tel-00483944
 [wp-en-typed-lambda-calculus]: https://en.wikipedia.org/wiki/Typed_lambda_calculus
 [tales-lambda]: https://tales.mbivert.com/on-nix-language-lambda-calculus/
+
+<!--
+
+https://okmij.org/ftp/ML/generalization.html
+
+https://nostarch.com/writing-c-compiler
+https://github.com/rui314/chibicc
+
+https://compilerbook.com/
+https://interpreterbook.com/
+
+-->

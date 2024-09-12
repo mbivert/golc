@@ -27,6 +27,8 @@ const (
 	tokenMinus      // -
 	tokenStar       // *
 	tokenSlash      // /
+	tokenOr         // |
+	tokenAnd        // &
 	tokenMoreEq     // ≥
 	tokenLessEq     // ≤
 	tokenFPlus      // +.

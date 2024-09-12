@@ -2,12 +2,24 @@ package main
 
 /*
  * TODO: comments support
+ *
  * TODO: we're duplicating some effort in parsing scalars
  *	(integers, floats): we identify them here, but actually
  *	parse them in the parser. Perhaps we could parse them
  *	here already, which would imply wasting a few token{} bytes.
  *
  *	For now set aside to focus on more interesting things.
+ *
+ * TODO: we're only partially supporting extended tokens in
+ *	preparation for qlambda.
+ *
+ * NOTE: the parser is purposefully sophisticated in that it
+ *	relies on a bufio.Scanner instead of e.g. assuming the
+ *	the input files fits in a []byte (which should be the
+ *	expected use-case).
+ *
+ *	This means in particular that we need to handle cases
+ *	like  a read yielding incomplete runes.
  */
 
 import (
@@ -34,13 +46,13 @@ type scanner struct {
 	// the difference with utf8.RuneCountInString(tok.raw)
 	// is that, in case we emit a token, then go through
 	// the input buffer only to have to request more data
-	// to concluse, tw is reset.
+	// to conclude, tw is reset.
 	tw        uint
 
 	tok       token  // last token parsed
 }
 
-// single rune tokens
+// one rune tokens
 var ones = map[rune]tokenKind {
 	'('  : tokenLParen,
 	')'  : tokenRParen,
@@ -52,6 +64,11 @@ var ones = map[rune]tokenKind {
 	'+'  : tokenPlus,
 	'*'  : tokenStar,
 	'/'  : tokenSlash,
+	// NOTE: tokenOr and tokenAnd were added only
+	// for 'foo||' to be parsed correctly (see isSep() below)
+	// (nothing wrong with implementing them either)
+	'|'  : tokenOr,
+	'&'  : tokenAnd,
 	'≤'  : tokenLessEq,
 	'≥'  : tokenMoreEq,
 	'×'  : tokenProduct, // <P,Q> -> S <=> P×Q → S, as an ascii variant?
@@ -65,7 +82,7 @@ var ones = map[rune]tokenKind {
 //	'!'  : tokenExclamation,
 }
 
-// two ascii characters long (so far) tokens
+// two ascii characters tokens
 var twos = map[string]tokenKind {
 	"+." : tokenFPlus,
 	"-." : tokenFMinus,
@@ -80,7 +97,7 @@ var twos = map[string]tokenKind {
 
 // special names
 var many = map[string]tokenKind {
-	// XXX those were in twos, but aren't two ascii char long.
+	// XXX those were in twos, but aren't two bytes long.
 	"≤."     : tokenFLessEq,
 	"≥."     : tokenFMoreEq,
 	// XXX those were missing (untested thus)

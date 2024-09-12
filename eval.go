@@ -10,12 +10,12 @@ func evalUnaryExpr(x *UnaryExpr) (Expr, error) {
 	}
 
 	int64Ops := map[tokenKind](func (int64) int64) {
-		tokenPlus  : func (a int64) int64 { return a  },
+		tokenPlus  : func (a int64) int64 { return  a },
 		tokenMinus : func (a int64) int64 { return -a },
 	}
 
 	float64Ops := map[tokenKind](func (float64) float64) {
-		tokenPlus  : func (a float64) float64 { return a  },
+		tokenPlus  : func (a float64) float64 { return  a },
 		tokenMinus : func (a float64) float64 { return -a },
 	}
 

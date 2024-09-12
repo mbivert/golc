@@ -198,5 +198,17 @@ func TestScanAll(t *testing.T) {
 				token{tokenEOF,  1, 21, ""},
 			}, nil},
 		},
+		{
+			"'twos' are reckognized as a separator (was a bug)",
+			scanAll,
+			[]interface{}{strings.NewReader("foo||bar&&"), ""},
+			[]interface{}{[]token{
+				token{tokenName,   1, 1,  "foo"},
+				token{tokenOrOr,   1, 4,  "||"},
+				token{tokenName,   1, 6,  "bar"},
+				token{tokenAndAnd, 1, 9,  "&&"},
+				token{tokenEOF,    1, 11, ""},
+			}, nil},
+		},
 	})
 }
