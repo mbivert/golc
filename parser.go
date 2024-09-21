@@ -38,60 +38,39 @@ var opPrecs = map[tokenKind]int{
 	tokenFMoreEq: precCmp,
 }
 
-/*
+// Simple type (no polymorphism)
 type Type interface {
 	aType()
 }
 
-type type struct {}
-func (t *type) aType() {}
+type typ struct {}
+func (t *typ) aType() {}
 
 type arrowType struct {
-	type
+	typ
 	left, right *Type
 }
 
 type productType struct {
-	type
+	typ
 	left, right *Type
 }
 
 type unitType struct {
-	type
+	typ
 }
 
 type boolType struct {
-	type
+	typ
 }
 
-type int64Type struct {
-	type
+type intType struct {
+	typ
 }
 
-type float64Type struct {
-	type
+type floatType struct {
+	typ
 }
-
-type typeKind uint
-
-const (
-	KBool typeKind = iota // Bool
-	KInt                  // Integer
-	KFloat                // Float
-	KArrow                // Arrow
-	KProduct              // Product
-	KUnit                 // Unit
-)
-*/
-
-/*
-// Do we need? As everything is an expression here
-type Node interface {
-	aNode()
-}
-type node struct {}
-
-*/
 
 // NOTE: I'm not sure we can implement a recursive union type
 // easily with a generic: the compiler complains about recursivity,
@@ -101,7 +80,9 @@ type Expr interface {
 	aExpr()
 }
 
-type expr struct{}
+type expr struct{
+	typ Type
+}
 
 func (e *expr) aExpr() {}
 
@@ -201,6 +182,36 @@ etc.
 
 */
 
+func (p *parser) PrimitiveType() Type {
+	switch k := p.tok.kind; k {
+	case tokenTBool:
+		return &boolType{}
+	case tokenTInt:
+		return &intType{}
+	case tokenTFloat:
+		return &floatType{}
+	case tokenTUnit:
+		return &unitType{}
+	default:
+		p.errf("Unexpected token: %s", k.String())
+	}
+	return nil
+}
+
+func (p *parser) ProductType() Type {
+	return p.PrimitiveType()
+}
+
+// product (×) binds stronger than arrows; arrow is right
+// associative.
+func (p *parser) ArrowType() Type {
+	return p.ProductType()
+}
+
+func (p *parser) Type() Type {
+	return p.ArrowType()
+}
+
 // TODO: Rename IntExpr to IntLit & cie?
 func (p *parser) number() Expr {
 	xs := []byte(p.tok.raw)
@@ -231,9 +242,9 @@ func (p *parser) number() Expr {
 
 	p.next()
 	if k == tokenFloat {
-		return &FloatExpr{expr{}, (float64(a) + (b / c))}
+		return &FloatExpr{expr{&floatType{}}, (float64(a) + (b / c))}
 	}
-	return &IntExpr{expr{}, a}
+	return &IntExpr{expr{&intType{}}, a}
 }
 
 func (p *parser) bool() *BoolExpr {
@@ -242,7 +253,7 @@ func (p *parser) bool() *BoolExpr {
 		v = false
 	}
 	p.next()
-	return &BoolExpr{expr{}, v}
+	return &BoolExpr{expr{&boolType{}}, v}
 }
 
 func (p *parser) parenExpr() Expr {
@@ -261,7 +272,7 @@ func (p *parser) unaryOpExpr() *UnaryExpr {
 	return &UnaryExpr{expr{}, o, p.binaryExprs()}
 }
 
-func (p *parser) xvar() *VarExpr {
+func (p *parser) varExpr() *VarExpr {
 	n := p.tok.raw
 	p.next()
 	return &VarExpr{expr{}, n}
@@ -278,7 +289,7 @@ func (p *parser) unaryExpr() Expr {
 	case tokenMinus, tokenPlus, tokenFMinus, tokenFPlus:
 		return p.unaryOpExpr()
 	case tokenName:
-		return p.xvar()
+		return p.varExpr()
 	default:
 		p.errf("Unexpected token: %s", k.String())
 	}
@@ -333,11 +344,20 @@ func (p *parser) absExpr() Expr {
 	}
 	n := p.tok.raw
 	p.next()
+
+	// a type information may be supplied
+	e := expr{}
+	if p.tok.kind == tokenColon {
+		p.next()
+		typ := p.Type()
+		e = expr{typ}
+	}
+
 	if p.tok.kind != tokenDot {
 		p.errf("Expecting dot after lambda variable name, got: %s", p.tok.kind.String())
 	}
 	p.next()
-	return &AbsExpr{expr{}, n, p.appExpr()}
+	return &AbsExpr{e, n, p.appExpr()}
 }
 
 func (p *parser) appExpr() Expr {

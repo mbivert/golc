@@ -6,6 +6,10 @@ import (
 )
 
 // Compute all free variables within a given expression
+// NOTE: this is more efficient than the previous version,
+// but perhaps the previous version would still be preferable,
+// were we to store the actual free variables at each nodes where
+// we'll need it.
 func freeVars(x Expr) map[string]bool {
 	var aux func(Expr, map[string]bool) map[string]bool
 
@@ -123,6 +127,7 @@ func prettyPrint(x Expr) string {
 			panic("O__o") // TODO
 		}
 	}
+
 	return aux(x, false, false)
 }
 

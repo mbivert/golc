@@ -22,6 +22,12 @@ const (
 	tokenInt        // int64
 	tokenBool       // bool
 
+	// XXX meh, potential confusion, hopefully benign.
+	tokenTBool      // bool
+	tokenTInt       // int
+	tokenTFloat     // float
+	tokenTUnit      // unit
+
 	tokenExcl       // !
 	tokenPlus       // +
 	tokenMinus      // -
