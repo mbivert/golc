@@ -9,6 +9,7 @@ import (
 
 const (
 	_ = iota
+	precBool
 	precCmp
 	precAdd
 	precMul
@@ -36,6 +37,9 @@ var opPrecs = map[tokenKind]int{
 
 	tokenFLessEq: precCmp,
 	tokenFMoreEq: precCmp,
+
+	tokenAndAnd: precBool,
+	tokenOrOr:   precBool,
 }
 
 // Simple type (no polymorphism)
@@ -89,6 +93,10 @@ func (e *expr) aExpr() {}
 type IntExpr struct {
 	expr
 	v int64
+}
+
+type UnitExpr struct {
+	expr
 }
 
 type FloatExpr struct {
@@ -185,12 +193,16 @@ etc.
 func (p *parser) PrimitiveType() Type {
 	switch k := p.tok.kind; k {
 	case tokenTBool:
+		p.next()
 		return &boolType{}
 	case tokenTInt:
+		p.next()
 		return &intType{}
 	case tokenTFloat:
+		p.next()
 		return &floatType{}
 	case tokenTUnit:
+		p.next()
 		return &unitType{}
 	default:
 		p.errf("Unexpected token: %s", k.String())
@@ -256,6 +268,11 @@ func (p *parser) bool() *BoolExpr {
 	return &BoolExpr{expr{&boolType{}}, v}
 }
 
+func (p *parser) star() *UnitExpr {
+	p.next()
+	return &UnitExpr{expr{&unitType{}}}
+}
+
 func (p *parser) parenExpr() Expr {
 	p.next()
 	e := p.appExpr()
@@ -282,6 +299,8 @@ func (p *parser) unaryExpr() Expr {
 	switch k := p.tok.kind; k {
 	case tokenInt, tokenFloat:
 		return p.number()
+	case tokenStar:
+		return p.star()
 	case tokenBool:
 		return p.bool()
 	case tokenLParen:
@@ -377,6 +396,7 @@ func (p *parser) parse() (e Expr, err error) {
 	defer func() {
 		if x := recover(); x != nil {
 			err = x.(error)
+			fmt.Println(err)
 		}
 	}()
 

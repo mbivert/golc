@@ -497,3 +497,75 @@ func TestTypelessParse(t *testing.T) {
 		},
 	})
 }
+
+func TestPrimitiveType(t *testing.T) {
+	doTests(t, []test{
+		{
+			"boolean",
+			parse,
+			[]interface{}{strings.NewReader("λx : bool . x && y"), ""},
+			[]interface{}{
+				&AbsExpr{
+					expr{&boolType{}},
+					"x",
+					&BinaryExpr{
+						expr{},
+						tokenAndAnd,
+						&VarExpr{expr{}, "x"},
+						&VarExpr{expr{}, "y"},
+					},
+				},
+				nil,
+			},
+		},
+		{
+			"int",
+			parse,
+			[]interface{}{strings.NewReader("λx : int . x + y"), ""},
+			[]interface{}{
+				&AbsExpr{
+					expr{&intType{}},
+					"x",
+					&BinaryExpr{
+						expr{},
+						tokenPlus,
+						&VarExpr{expr{}, "x"},
+						&VarExpr{expr{}, "y"},
+					},
+				},
+				nil,
+			},
+		},
+		{
+			"float",
+			parse,
+			[]interface{}{strings.NewReader("λx : float . x +. y"), ""},
+			[]interface{}{
+				&AbsExpr{
+					expr{&floatType{}},
+					"x",
+					&BinaryExpr{
+						expr{},
+						tokenFPlus,
+						&VarExpr{expr{}, "x"},
+						&VarExpr{expr{}, "y"},
+					},
+				},
+				nil,
+			},
+		},
+		{
+			"float",
+			parse,
+			[]interface{}{strings.NewReader("λx : unit. *"), ""},
+			[]interface{}{
+				&AbsExpr{
+					expr{&unitType{}},
+					"x",
+					&UnitExpr{expr{&unitType{}}},
+				},
+				nil,
+			},
+		},
+	})
+}
