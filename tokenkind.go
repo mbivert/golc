@@ -27,19 +27,20 @@ const (
 	tokenMinus      // -
 	tokenStar       // *
 	tokenSlash      // /
+
+	tokenLess       // <
+	tokenMore       // >
+
 	tokenOr         // |
 	tokenAnd        // &
+
 	tokenMoreEq     // ≥
 	tokenLessEq     // ≤
+
 	tokenFPlus      // +.
 	tokenFMinus     // -.
 	tokenFStar      // *.
 	tokenFSlash     // /.
-	tokenFMoreEq    // ≥.
-	tokenFLessEq    // ≤.
-
-	tokenLess       // <
-	tokenMore       // >
 
 	tokenFLess      // <.
 	tokenFMore      // >.
@@ -47,7 +48,11 @@ const (
 	tokenAndAnd     // &&
 	tokenOrOr       // ||
 
+	tokenFMoreEq    // ≥.
+	tokenFLessEq    // ≤.
+
 	// Extensions see [Selinger2009]
+	// (TODO: partial)
 	tokenColon      // :
 	tokenPi         // π
 

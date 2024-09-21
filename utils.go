@@ -18,7 +18,7 @@ func mergeMaps(m, n map[string]bool) map[string]bool {
 func freeVars(x Expr) map[string]bool {
 	switch x.(type) {
 	case *VarExpr:
-		return map[string]bool{x.(*VarExpr).name : true}
+		return map[string]bool{x.(*VarExpr).name: true}
 	case *AbsExpr:
 		m := freeVars(x.(*AbsExpr).right)
 		delete(m, x.(*AbsExpr).bound)
@@ -41,7 +41,7 @@ func freeVars(x Expr) map[string]bool {
 func allVars(x Expr) map[string]bool {
 	switch x.(type) {
 	case *VarExpr:
-		return map[string]bool{x.(*VarExpr).name : true}
+		return map[string]bool{x.(*VarExpr).name: true}
 	case *AbsExpr:
 		return freeVars(x.(*AbsExpr).right)
 	case *AppExpr:
@@ -110,3 +110,20 @@ func prettyPrint(x Expr) string {
 	}
 	return aux(x, false, false)
 }
+
+/*
+type DeBruijnBVarExpr struct {
+	expr
+	n int
+}
+
+type DeBruijnAbsExpr struct {
+	expr
+	right Expr
+}
+
+// For now just a toy
+// https://plfa.github.io/DeBruijn/
+func toDeBruijn(x Expr) Expr {
+}
+*/

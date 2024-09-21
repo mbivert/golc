@@ -1,25 +1,22 @@
 package main
 
-import (
-)
-
 func evalUnaryExpr(x *UnaryExpr) (Expr, error) {
 	r, err := evalExpr(x.right)
 	if err != nil {
 		return nil, err
 	}
 
-	int64Ops := map[tokenKind](func (int64) int64) {
-		tokenPlus  : func (a int64) int64 { return  a },
-		tokenMinus : func (a int64) int64 { return -a },
+	int64Ops := map[tokenKind](func(int64) int64){
+		tokenPlus:  func(a int64) int64 { return a },
+		tokenMinus: func(a int64) int64 { return -a },
 	}
 
-	float64Ops := map[tokenKind](func (float64) float64) {
-		tokenPlus  : func (a float64) float64 { return  a },
-		tokenMinus : func (a float64) float64 { return -a },
+	float64Ops := map[tokenKind](func(float64) float64){
+		tokenPlus:  func(a float64) float64 { return a },
+		tokenMinus: func(a float64) float64 { return -a },
 	}
 
-	switch(x.op) {
+	switch x.op {
 	case tokenPlus:
 		fallthrough
 	case tokenMinus:
@@ -38,7 +35,7 @@ func evalUnaryExpr(x *UnaryExpr) (Expr, error) {
 		}
 		return &FloatExpr{expr{}, float64Ops[x.op](ir.v)}, nil
 	default:
-		panic("Unexpected unary operator "+x.op.String())
+		panic("Unexpected unary operator " + x.op.String())
 	}
 
 	return nil, nil
@@ -54,39 +51,39 @@ func evalBinaryExpr(x *BinaryExpr) (Expr, error) {
 		return nil, err
 	}
 
-	int64Ops := map[tokenKind](func (int64,int64) int64) {
-		tokenPlus  : func (a, b int64) int64 { return a+b },
-		tokenStar  : func (a, b int64) int64 { return a*b },
-		tokenMinus : func (a, b int64) int64 { return a-b },
-		tokenSlash : func (a, b int64) int64 { return a/b },
+	int64Ops := map[tokenKind](func(int64, int64) int64){
+		tokenPlus:  func(a, b int64) int64 { return a + b },
+		tokenStar:  func(a, b int64) int64 { return a * b },
+		tokenMinus: func(a, b int64) int64 { return a - b },
+		tokenSlash: func(a, b int64) int64 { return a / b },
 	}
 
-/*
-	int64CmpOps := map[tokenKind](func (int64,int64) bool) {
-		tokenLess   : func (a, b int64) bool { return a<b  },
-		tokenMore   : func (a, b int64) bool { return a>b  },
-		tokenLessEq : func (a, b int64) bool { return a<=b },
-		tokenMoreEq : func (a, b int64) bool { return a>=b },
-	}
-*/
+	/*
+		int64CmpOps := map[tokenKind](func (int64,int64) bool) {
+			tokenLess   : func (a, b int64) bool { return a<b  },
+			tokenMore   : func (a, b int64) bool { return a>b  },
+			tokenLessEq : func (a, b int64) bool { return a<=b },
+			tokenMoreEq : func (a, b int64) bool { return a>=b },
+		}
+	*/
 
-	float64Ops := map[tokenKind](func (float64,float64) float64) {
-		tokenPlus  : func (a, b float64) float64 { return a+b },
-		tokenStar  : func (a, b float64) float64 { return a*b },
-		tokenMinus : func (a, b float64) float64 { return a-b },
-		tokenSlash : func (a, b float64) float64 { return a/b },
+	float64Ops := map[tokenKind](func(float64, float64) float64){
+		tokenPlus:  func(a, b float64) float64 { return a + b },
+		tokenStar:  func(a, b float64) float64 { return a * b },
+		tokenMinus: func(a, b float64) float64 { return a - b },
+		tokenSlash: func(a, b float64) float64 { return a / b },
 	}
 
-/*
-	float64CmpOps := map[tokenKind](func (float64,float64) bool) {
-		tokenFLess   : func (a, b float64) bool { return a<b  },
-		tokenFMore   : func (a, b float64) bool { return a>b  },
-		tokenFLessEq : func (a, b float64) bool { return a<=b },
-		tokenFMoreEq : func (a, b float64) bool { return a>=b },
-	}
-*/
+	/*
+		float64CmpOps := map[tokenKind](func (float64,float64) bool) {
+			tokenFLess   : func (a, b float64) bool { return a<b  },
+			tokenFMore   : func (a, b float64) bool { return a>b  },
+			tokenFLessEq : func (a, b float64) bool { return a<=b },
+			tokenFMoreEq : func (a, b float64) bool { return a>=b },
+		}
+	*/
 
-	switch(x.op) {
+	switch x.op {
 	// XXX/TODO: should we allow e.g. x + 3? where x
 	// is undefined (why not I guess?)
 	case tokenPlus:
@@ -107,7 +104,7 @@ func evalBinaryExpr(x *BinaryExpr) (Expr, error) {
 		if !ok {
 			panic("oooo")
 		}
-		return &IntExpr{expr{}, int64Ops[x.op](il.v,ir.v)}, nil
+		return &IntExpr{expr{}, int64Ops[x.op](il.v, ir.v)}, nil
 
 	case tokenFPlus:
 		fallthrough
@@ -127,7 +124,7 @@ func evalBinaryExpr(x *BinaryExpr) (Expr, error) {
 		if !ok {
 			panic("oooo")
 		}
-		return &FloatExpr{expr{}, float64Ops[x.op](il.v,ir.v)}, nil
+		return &FloatExpr{expr{}, float64Ops[x.op](il.v, ir.v)}, nil
 
 	default:
 		panic("TODO")

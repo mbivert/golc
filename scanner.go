@@ -23,105 +23,105 @@ package main
  */
 
 import (
+	"bufio"
 	"fmt"
 	"io"
 	"unicode"
 	"unicode/utf8"
-	"bufio"
 )
 
 type token struct {
-	kind     tokenKind
-	ln, cn   uint       // line/column numbers (1-based)
-	raw      string
+	kind   tokenKind
+	ln, cn uint // line/column numbers (1-based)
+	raw    string
 }
 
 type scanner struct {
-	scan      *bufio.Scanner
+	scan *bufio.Scanner
 
-	fn        string // filename
-	ln, cn    uint   // line/column numbers (1-based)
+	fn     string // filename
+	ln, cn uint   // line/column numbers (1-based)
 
 	// last emitted token's width (runes).
 	// the difference with utf8.RuneCountInString(tok.raw)
 	// is that, in case we emit a token, then go through
 	// the input buffer only to have to request more data
 	// to conclude, tw is reset.
-	tw        uint
+	tw uint
 
-	tok       token  // last token parsed
+	tok token // last token parsed
 }
 
 // one rune tokens
-var ones = map[rune]tokenKind {
-	'('  : tokenLParen,
-	')'  : tokenRParen,
-	'.'  : tokenDot,
-	':'  : tokenColon,
-	'<'  : tokenLess,
-	'>'  : tokenMore,
-	'-'  : tokenMinus,
-	'+'  : tokenPlus,
-	'*'  : tokenStar,
-	'/'  : tokenSlash,
+var ones = map[rune]tokenKind{
+	'(': tokenLParen,
+	')': tokenRParen,
+	'.': tokenDot,
+	':': tokenColon,
+	'+': tokenPlus,
+	'-': tokenMinus,
+	'*': tokenStar,
+	'/': tokenSlash,
+	'<': tokenLess,
+	'>': tokenMore,
 	// NOTE: tokenOr and tokenAnd were added only
 	// for 'foo||' to be parsed correctly (see isSep() below)
 	// (nothing wrong with implementing them either)
-	'|'  : tokenOr,
-	'&'  : tokenAnd,
-	'≤'  : tokenLessEq,
-	'≥'  : tokenMoreEq,
-	'×'  : tokenProduct, // <P,Q> -> S <=> P×Q → S, as an ascii variant?
-	'→' : tokenArrow,
-	'λ'  : tokenLambda,
-	'π'  : tokenPi,
-//	'⊸'  : tokenRMultiMap,
-//	'⊗'  : tokenOMult,
-//	'⊕'  : tokenOPlus,
-//	'⊤'  : tokenTrue,
-//	'!'  : tokenExclamation,
+	'|': tokenOr,
+	'&': tokenAnd,
+	'≤': tokenLessEq,
+	'≥': tokenMoreEq,
+	'×': tokenProduct, // <P,Q> -> S <=> P×Q → S, as an ascii variant?
+	'→': tokenArrow,
+	'λ': tokenLambda,
+	'π': tokenPi,
+	// '⊸'  : tokenRMultiMap,
+	// '⊗'  : tokenOMult,
+	// '⊕'  : tokenOPlus,
+	// '⊤'  : tokenTrue,
+	// '!'  : tokenExclamation,
 }
 
 // two ascii characters tokens
-var twos = map[string]tokenKind {
-	"+." : tokenFPlus,
-	"-." : tokenFMinus,
-	"*." : tokenFStar,
-	"/." : tokenFSlash,
-	"<." : tokenFLess,
-	">." : tokenFMore,
-	"->" : tokenArrow,
-	"&&" : tokenAndAnd,
-	"||" : tokenOrOr,
+var twos = map[string]tokenKind{
+	"+.": tokenFPlus,
+	"-.": tokenFMinus,
+	"*.": tokenFStar,
+	"/.": tokenFSlash,
+	"<.": tokenFLess,
+	">.": tokenFMore,
+	"->": tokenArrow,
+	"&&": tokenAndAnd,
+	"||": tokenOrOr,
 }
 
 // special names
-var many = map[string]tokenKind {
+var many = map[string]tokenKind{
 	// XXX those were in twos, but aren't two bytes long.
-	"≤."     : tokenFLessEq,
-	"≥."     : tokenFMoreEq,
+	"≤.": tokenFLessEq,
+	"≥.": tokenFMoreEq,
 	// XXX those were missing (untested thus)
-	"<=."    : tokenFLessEq,
-	">=."    : tokenFMoreEq,
+	"<=.": tokenFLessEq,
+	">=.": tokenFMoreEq,
 	// XXX and/or untested
-	"and"    : tokenAndAnd,
-	"or"     : tokenOrOr,
+	"and": tokenAndAnd,
+	"or":  tokenOrOr,
 
-	"lambda" : tokenLambda,
-	"let"    : tokenLet,
-	"in"     : tokenIn,
-	"match"  : tokenMatch,
-	"with"   : tokenWith,
-	"rec"    : tokenRec,
-	"pi"     : tokenPi,
-	"true"   : tokenBool,
-	"false"  : tokenBool,
+	"lambda": tokenLambda,
+	"let":    tokenLet,
+	"in":     tokenIn,
+	"match":  tokenMatch,
+	"with":   tokenWith,
+	"rec":    tokenRec,
+	"pi":     tokenPi,
+	"true":   tokenBool,
+	"false":  tokenBool,
 	// Untested. We're also missing all our gates:
 	//	H (Hadamard) N (not) Vtheta (phase shift)
 	//	X (exchange) N_C (controlled not)
 	//	two more Pauli besides (not)?
-//	"new"    : tokenNew,
-//	"meas"   : tokenMeas,
+	//	"new"    : tokenNew,
+	//	"meas"   : tokenMeas,
 }
 
 func isSep(r rune) bool {
@@ -157,7 +157,7 @@ func (s *scanner) scanRune(xs []byte, p int, atEOF bool) (rune, int, bool, error
 }
 
 func (s *scanner) setKind(k tokenKind) {
-	s.tok.raw  = ""
+	s.tok.raw = ""
 	s.tok.kind = k
 }
 
@@ -232,13 +232,13 @@ func (s *scanner) scanNameOrId(xs []byte, p, q int) (int, []byte, error) {
 
 func (s *scanner) init(in io.Reader, fn string) {
 	s.scan = bufio.NewScanner(in)
-	s.fn   = fn
-	s.ln   = 1
-	s.cn   = 1
-	s.tw   = 0
+	s.fn = fn
+	s.ln = 1
+	s.cn = 1
+	s.tw = 0
 
 	// fragile.
-//	s.tok.kind = tokenError
+	//	s.tok.kind = tokenError
 
 	s.scan.Split(func(xs []byte, atEOF bool) (int, []byte, error) {
 		s.cn += uint(s.tw)
@@ -271,7 +271,7 @@ func (s *scanner) init(in io.Reader, fn string) {
 			if k, ok := twos[string(xs[p:p+2])]; ok {
 				s.setKind(k)
 				s.tw += 2
-				return p+2, xs[p:p+2], nil
+				return p + 2, xs[p : p+2], nil
 			}
 		}
 
@@ -284,7 +284,7 @@ func (s *scanner) init(in io.Reader, fn string) {
 		if k, ok := ones[r]; ok {
 			s.setKind(k)
 			s.tw++
-			return p+w, xs[p:p+w], nil
+			return p + w, xs[p : p+w], nil
 		}
 
 		// .<digit> already managed earlier
@@ -298,8 +298,8 @@ func (s *scanner) init(in io.Reader, fn string) {
 			var r rune
 			r, w, more, err = s.scanRune(xs, q, atEOF)
 			if more {
-				s.tw = 0;
-				return p, nil, nil;
+				s.tw = 0
+				return p, nil, nil
 			} else if err != nil {
 				return q, nil, err
 			}
@@ -337,8 +337,8 @@ func (s *scanner) next() bool {
 	//	way of handling the EOF token, so I'm leaving
 	//	this is-is for now.
 	if r || s.scan.Err() == nil {
-		s.tok.ln  = s.ln
-		s.tok.cn  = s.cn
+		s.tok.ln = s.ln
+		s.tok.cn = s.cn
 		s.tok.raw = s.scan.Text()
 	}
 	return r
@@ -353,6 +353,6 @@ func scanAll(in io.Reader, fn string) ([]token, error) {
 		ts = append(ts, s.tok)
 	}
 	ts = append(ts, s.tok)
-//	println("Error: ", s.scan.Err())
+	//	println("Error: ", s.scan.Err())
 	return ts, s.scan.Err()
 }

@@ -1,10 +1,10 @@
 package main
 
 import (
-	"io"
 	"fmt"
-	"unicode"
+	"io"
 	"strings"
+	"unicode"
 )
 
 const (
@@ -14,28 +14,28 @@ const (
 	precMul
 )
 
-var opPrecs = map[tokenKind]int {
-	tokenPlus    : precAdd,
-	tokenMinus   : precAdd,
-	tokenStar    : precMul,
-	tokenSlash   : precMul,
+var opPrecs = map[tokenKind]int{
+	tokenPlus:  precAdd,
+	tokenMinus: precAdd,
+	tokenStar:  precMul,
+	tokenSlash: precMul,
 
-	tokenLess    : precCmp,
-	tokenMore    : precCmp,
+	tokenLess: precCmp,
+	tokenMore: precCmp,
 
-	tokenLessEq  : precCmp,
-	tokenMoreEq  : precCmp,
+	tokenLessEq: precCmp,
+	tokenMoreEq: precCmp,
 
-	tokenFPlus   : precAdd,
-	tokenFMinus  : precAdd,
-	tokenFStar   : precMul,
-	tokenFSlash  : precMul,
+	tokenFPlus:  precAdd,
+	tokenFMinus: precAdd,
+	tokenFStar:  precMul,
+	tokenFSlash: precMul,
 
-	tokenFMore   : precCmp,
-	tokenFLess   : precCmp,
+	tokenFMore: precCmp,
+	tokenFLess: precCmp,
 
-	tokenFLessEq : precCmp,
-	tokenFMoreEq : precCmp,
+	tokenFLessEq: precCmp,
+	tokenFMoreEq: precCmp,
 }
 
 /*
@@ -92,11 +92,16 @@ type node struct {}
 
 */
 
+// NOTE: I'm not sure we can implement a recursive union type
+// easily with a generic: the compiler complains about recursivity,
+// and we need our sub-types depending on Expr (e.g. AbsExpr) to be
+// parametrized as well. But, I haven't digged too deep either.
 type Expr interface {
 	aExpr()
 }
 
-type expr struct {}
+type expr struct{}
+
 func (e *expr) aExpr() {}
 
 type IntExpr struct {
@@ -139,19 +144,19 @@ type UnaryExpr struct {
 
 type BinaryExpr struct {
 	expr
-	op tokenKind
+	op          tokenKind
 	left, right Expr
 }
 
 type parser struct {
 	scanner
-	errf func(string, ...interface{}) ()
+	errf func(string, ...interface{})
 }
 
 func (p *parser) errHeref(m string, args ...interface{}) error {
 	return fmt.Errorf("%s:%d:%d: %s", p.fn,
-			p.tok.ln, p.tok.cn,
-			fmt.Sprintf(m, args...))
+		p.tok.ln, p.tok.cn,
+		fmt.Sprintf(m, args...))
 }
 
 func (p *parser) init(in io.Reader, fn string) {
@@ -198,7 +203,7 @@ etc.
 // TODO: Rename IntExpr to IntLit & cie?
 func (p *parser) number() Expr {
 	xs := []byte(p.tok.raw)
-	k  := p.tok.kind
+	k := p.tok.kind
 
 	// parsing x = a + b; b < 1
 	var a int64
@@ -225,7 +230,7 @@ func (p *parser) number() Expr {
 
 	p.next()
 	if k == tokenFloat {
-		return &FloatExpr{expr{}, (float64(a) + (b/c))}
+		return &FloatExpr{expr{}, (float64(a) + (b / c))}
 	}
 	return &IntExpr{expr{}, a}
 }
@@ -241,7 +246,7 @@ func (p *parser) bool() *BoolExpr {
 
 func (p *parser) parenExpr() Expr {
 	p.next()
-	e := p.app()
+	e := p.appExpr()
 	if k := p.tok.kind; k != tokenRParen {
 		p.errf("Expecting left paren, got: %s", k.String())
 	}
@@ -252,7 +257,7 @@ func (p *parser) parenExpr() Expr {
 func (p *parser) unaryOpExpr() *UnaryExpr {
 	o := p.tok.kind
 	p.next()
-	return &UnaryExpr{expr{}, o, p.expr()}
+	return &UnaryExpr{expr{}, o, p.binaryExprs()}
 }
 
 func (p *parser) xvar() *VarExpr {
@@ -262,8 +267,6 @@ func (p *parser) xvar() *VarExpr {
 }
 
 func (p *parser) unaryExpr() Expr {
-	fmt.Println(p.tok)
-	fmt.Println(p.tok.kind)
 	switch k := p.tok.kind; k {
 	case tokenInt, tokenFloat:
 		return p.number()
@@ -292,7 +295,10 @@ func (p *parser) hasOp() int {
 func (p *parser) binaryExpr(prec int) Expr {
 	left := p.unaryExpr()
 
-	for x := p.hasOp() ; x > prec; x = p.hasOp() {
+	// we start the recursive parsing with prec == 0, so we'll
+	// have to get there again and slurp the whole expression
+	// (all genuine operators have an precedence > 0)
+	for x := p.hasOp(); x > prec; x = p.hasOp() {
 		op := p.tok.kind
 		p.next()
 		right := p.binaryExpr(x)
@@ -302,19 +308,21 @@ func (p *parser) binaryExpr(prec int) Expr {
 	return left
 }
 
-func (p *parser) expr() Expr {
+func (p *parser) binaryExprs() Expr {
 	return p.binaryExpr(0)
 }
 
-func (p *parser) abs() Expr {
+func (p *parser) absExpr() Expr {
 	if p.tok.kind != tokenLambda {
-		x := p.expr()
+		x := p.binaryExprs()
+
+		// is this the short form: "x. [...]" instead of "λx. [...]"
 		y, ok := x.(*VarExpr)
-		if !ok ||  p.tok.kind != tokenDot {
+		if !ok || p.tok.kind != tokenDot {
 			return x
 		}
 		p.next()
-		r := p.app()
+		r := p.appExpr()
 		return &AbsExpr{expr{}, y.name, r}
 	}
 
@@ -328,21 +336,22 @@ func (p *parser) abs() Expr {
 		p.errf("Expecting dot after lambda variable name, got: %s", p.tok.kind.String())
 	}
 	p.next()
-	return &AbsExpr{expr{}, n, p.app()}
+	return &AbsExpr{expr{}, n, p.appExpr()}
 }
 
-func (p *parser) app() Expr {
-	l := p.abs()
+func (p *parser) appExpr() Expr {
+	l := p.absExpr()
 
-	// maybe this is a bit too fragile?
+	// XXX too fragile?
 	for p.tok.kind != tokenEOF && p.tok.kind != tokenRParen {
-		r := p.abs()
+		r := p.absExpr()
 		l = &AppExpr{expr{}, l, r}
 	}
 
 	return l
 }
 
+// parsing entry point, only called once.
 func (p *parser) parse() (e Expr, err error) {
 	defer func() {
 		if x := recover(); x != nil {
@@ -351,7 +360,7 @@ func (p *parser) parse() (e Expr, err error) {
 	}()
 
 	p.next()
-	e = p.app()
+	e = p.appExpr()
 	return e, err
 }
 

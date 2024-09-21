@@ -1,10 +1,10 @@
 package main
 
 import (
-	"testing"
 	"fmt"
 	"strings"
-//	"encoding/json"
+	"testing"
+	// "encoding/json"
 )
 
 // True
@@ -78,17 +78,17 @@ func TestTypelessParse(t *testing.T) {
 			[]interface{}{strings.NewReader("  false "), ""},
 			[]interface{}{&BoolExpr{expr{}, false}, nil},
 		},
-/*
-		{
-			"single int + garbage",
-			parse,
-			[]interface{}{strings.NewReader("  1234 12"), ""},
-			[]interface{}{
-				&IntExpr{expr{}, 1234},
-				fmt.Errorf(":1:8: Unexpected token: int64"),
+		/*
+			{
+				"single int + garbage",
+				parse,
+				[]interface{}{strings.NewReader("  1234 12"), ""},
+				[]interface{}{
+					&IntExpr{expr{}, 1234},
+					fmt.Errorf(":1:8: Unexpected token: int64"),
+				},
 			},
-		},
-*/
+		*/
 		{
 			"two consecutives ints: 'bad' function call, still parses OK",
 			parse,
