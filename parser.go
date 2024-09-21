@@ -76,7 +76,8 @@ type typeKind uint
 
 const (
 	KBool typeKind = iota // Bool
-	KNat                  // Natural
+	KInt                  // Integer
+	KFloat                // Float
 	KArrow                // Arrow
 	KProduct              // Product
 	KUnit                 // Unit

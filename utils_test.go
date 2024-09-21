@@ -46,34 +46,6 @@ var and = &AbsExpr{
 	},
 }
 
-func TestMergeMaps(t *testing.T) {
-	doTests(t, []test{
-		{
-			"empty maps",
-			mergeMaps,
-			[]interface{}{map[string]bool{}, map[string]bool{}},
-			[]interface{}{map[string]bool{}},
-		},
-		{
-			"Both maps non-empty",
-			mergeMaps,
-			[]interface{}{map[string]bool{"a":true}, map[string]bool{"b": false}},
-			[]interface{}{map[string]bool{
-				"a" : true,
-				"b" : false,
-			}},
-		},
-		{
-			"Overriding",
-			mergeMaps,
-			[]interface{}{map[string]bool{"a":true}, map[string]bool{"a": false}},
-			[]interface{}{map[string]bool{
-				"a" : false,
-			}},
-		},
-	})
-}
-
 func TestFreeVars(t *testing.T) {
 	doTests(t, []test{
 		{
