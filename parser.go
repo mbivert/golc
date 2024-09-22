@@ -204,6 +204,14 @@ func (p *parser) PrimitiveType() Type {
 	case tokenTUnit:
 		p.next()
 		return &UnitType{}
+	case tokenLParen:
+		p.next()
+		t := p.Type()
+		if p.tok.kind != tokenRParen {
+			p.errf("Expecting left paren, got: %s", k.String())
+		}
+		p.next()
+		return t
 	default:
 		p.errf("Unexpected token: %s", k.String())
 	}

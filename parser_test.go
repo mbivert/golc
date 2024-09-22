@@ -570,7 +570,6 @@ func TestPrimitiveType(t *testing.T) {
 	})
 }
 
-// TODO: (bool → bool) → bool: parenthesis to tweak associativity.
 func TestArrowType(t *testing.T) {
 	doTests(t, []test{
 		{
@@ -642,6 +641,32 @@ func TestArrowType(t *testing.T) {
 							&VarExpr{expr{}, "z"},
 						},
 						&IntExpr{expr{&IntType{}}, 3},
+					},
+				},
+				nil,
+			},
+		},
+		{
+			"(bool → bool) → bool (manually altered associativity)",
+			parse,
+			[]interface{}{strings.NewReader("λx : (bool → bool) → bool . x y z"), ""},
+			[]interface{}{
+				&AbsExpr{
+					expr{&ArrowType{
+						typ{}, &ArrowType{
+							typ{}, &BoolType{}, &BoolType{},
+						},
+						&BoolType{},
+					}},
+					"x",
+					&AppExpr{
+						expr{},
+						&AppExpr{
+							expr{},
+							&VarExpr{expr{}, "x"},
+							&VarExpr{expr{}, "y"},
+						},
+						&VarExpr{expr{}, "z"},
 					},
 				},
 				nil,
