@@ -2,8 +2,6 @@ package main
 
 import (
 	"testing"
-//	"fmt"
-//	"encoding/json"
 )
 
 // True
@@ -214,6 +212,29 @@ func TestPrettyPrint(t *testing.T) {
 			prettyPrint,
 			[]interface{}{mustParse("(((x y) q) (z p))")},
 			[]interface{}{"(x y q (z p))"},
+		},
+	})
+}
+
+func TestGetFresh(t *testing.T) {
+	doTests(t, []test{
+		{
+			"empty map",
+			getFresh,
+			[]interface{}{map[string]bool{}},
+			[]interface{}{"x0"},
+		},
+		{
+			"not empty, but x0 still free",
+			getFresh,
+			[]interface{}{map[string]bool{"x":true,"y":true}},
+			[]interface{}{"x0"},
+		},
+		{
+			"x0 already used",
+			getFresh,
+			[]interface{}{map[string]bool{"x0":true}},
+			[]interface{}{"x1"},
 		},
 	})
 }

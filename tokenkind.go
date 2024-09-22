@@ -22,7 +22,8 @@ const (
 	tokenInt        // int64
 	tokenBool       // bool
 
-	// XXX meh, potential confusion, hopefully benign.
+	// XXX meh, potential confusion (stringers),
+	// hopefully benign.
 	tokenTBool      // bool
 	tokenTInt       // int
 	tokenTFloat     // float

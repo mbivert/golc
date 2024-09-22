@@ -131,6 +131,15 @@ func prettyPrint(x Expr) string {
 	return aux(x, false, false)
 }
 
+func getFresh(m map[string]bool) string {
+	for n := 0;; n++ {
+		s := fmt.Sprintf("x%d", n)
+		if _, ok := m[s]; !ok {
+			return s
+		}
+	}
+}
+
 /*
 type DeBruijnBVarExpr struct {
 	expr
@@ -143,7 +152,7 @@ type DeBruijnAbsExpr struct {
 }
 
 // For now just a toy
-// https://plfa.github.io/DeBruijn/
+// https://plfa.github.io/DeBruijn/ (TODO: read)
 func toDeBruijn(x Expr) Expr {
 }
 */
