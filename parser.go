@@ -50,29 +50,29 @@ type Type interface {
 type typ struct {}
 func (t *typ) aType() {}
 
-type arrowType struct {
+type ArrowType struct {
 	typ
-	left, right *Type
+	left, right Type
 }
 
-type productType struct {
+type ProductType struct {
 	typ
-	left, right *Type
+	left, right Type
 }
 
-type unitType struct {
-	typ
-}
-
-type boolType struct {
+type UnitType struct {
 	typ
 }
 
-type intType struct {
+type BoolType struct {
 	typ
 }
 
-type floatType struct {
+type IntType struct {
+	typ
+}
+
+type FloatType struct {
 	typ
 }
 
@@ -194,16 +194,16 @@ func (p *parser) PrimitiveType() Type {
 	switch k := p.tok.kind; k {
 	case tokenTBool:
 		p.next()
-		return &boolType{}
+		return &BoolType{}
 	case tokenTInt:
 		p.next()
-		return &intType{}
+		return &IntType{}
 	case tokenTFloat:
 		p.next()
-		return &floatType{}
+		return &FloatType{}
 	case tokenTUnit:
 		p.next()
-		return &unitType{}
+		return &UnitType{}
 	default:
 		p.errf("Unexpected token: %s", k.String())
 	}
@@ -217,7 +217,15 @@ func (p *parser) ProductType() Type {
 // product (×) binds stronger than arrows; arrow is right
 // associative.
 func (p *parser) ArrowType() Type {
-	return p.ProductType()
+	l := p.ProductType()
+
+	for p.tok.kind == tokenArrow {
+		p.next()
+		r := p.ArrowType()
+		l = &ArrowType{typ{}, l, r}
+	}
+
+	return l
 }
 
 func (p *parser) Type() Type {
@@ -254,9 +262,9 @@ func (p *parser) number() Expr {
 
 	p.next()
 	if k == tokenFloat {
-		return &FloatExpr{expr{&floatType{}}, (float64(a) + (b / c))}
+		return &FloatExpr{expr{&FloatType{}}, (float64(a) + (b / c))}
 	}
-	return &IntExpr{expr{&intType{}}, a}
+	return &IntExpr{expr{&IntType{}}, a}
 }
 
 func (p *parser) bool() *BoolExpr {
@@ -265,12 +273,12 @@ func (p *parser) bool() *BoolExpr {
 		v = false
 	}
 	p.next()
-	return &BoolExpr{expr{&boolType{}}, v}
+	return &BoolExpr{expr{&BoolType{}}, v}
 }
 
 func (p *parser) star() *UnitExpr {
 	p.next()
-	return &UnitExpr{expr{&unitType{}}}
+	return &UnitExpr{expr{&UnitType{}}}
 }
 
 func (p *parser) parenExpr() Expr {
@@ -352,6 +360,7 @@ func (p *parser) absExpr() Expr {
 		if !ok || p.tok.kind != tokenDot {
 			return x
 		}
+
 		p.next()
 		r := p.appExpr()
 		return &AbsExpr{expr{}, y.name, r}
