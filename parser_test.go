@@ -10,9 +10,11 @@ import (
 // True
 var T = &AbsExpr{
 	expr{},
+	&typ{},
 	"x",
 	&AbsExpr{
 		expr{},
+		&typ{},
 		"y",
 		&VarExpr{expr{}, "x"},
 	},
@@ -344,6 +346,7 @@ func TestTypelessParse(t *testing.T) {
 			[]interface{}{
 				&AbsExpr{
 					expr{},
+					&typ{},
 					"x",
 					&VarExpr{expr{}, "x"},
 				},
@@ -357,6 +360,7 @@ func TestTypelessParse(t *testing.T) {
 			[]interface{}{
 				&AbsExpr{
 					expr{},
+					&typ{},
 					"x",
 					&VarExpr{expr{}, "x"},
 				},
@@ -399,6 +403,7 @@ func TestTypelessParse(t *testing.T) {
 					expr{},
 					&AbsExpr{
 						expr{},
+						&typ{},
 						"x",
 						&AppExpr{
 							expr{},
@@ -408,6 +413,7 @@ func TestTypelessParse(t *testing.T) {
 					},
 					&AbsExpr{
 						expr{},
+						&typ{},
 						"x",
 						&AppExpr{
 							expr{},
@@ -444,6 +450,7 @@ func TestTypelessParse(t *testing.T) {
 			[]interface{}{
 				&AbsExpr{
 					expr{},
+					&typ{},
 					"x",
 					&AppExpr{
 						expr{},
@@ -473,6 +480,7 @@ func TestTypelessParse(t *testing.T) {
 			[]interface{}{
 				&AbsExpr{
 					expr{},
+					&typ{},
 					"x",
 					&AppExpr{
 						expr{},
@@ -506,7 +514,8 @@ func TestPrimitiveType(t *testing.T) {
 			[]interface{}{strings.NewReader("λx : bool . x && y"), ""},
 			[]interface{}{
 				&AbsExpr{
-					expr{&BoolType{}},
+					expr{},
+					&BoolType{},
 					"x",
 					&BinaryExpr{
 						expr{},
@@ -524,7 +533,8 @@ func TestPrimitiveType(t *testing.T) {
 			[]interface{}{strings.NewReader("λx : int . x + y"), ""},
 			[]interface{}{
 				&AbsExpr{
-					expr{&IntType{}},
+					expr{},
+					&IntType{},
 					"x",
 					&BinaryExpr{
 						expr{},
@@ -542,7 +552,8 @@ func TestPrimitiveType(t *testing.T) {
 			[]interface{}{strings.NewReader("λx : float . x +. y"), ""},
 			[]interface{}{
 				&AbsExpr{
-					expr{&FloatType{}},
+					expr{},
+					&FloatType{},
 					"x",
 					&BinaryExpr{
 						expr{},
@@ -560,7 +571,8 @@ func TestPrimitiveType(t *testing.T) {
 			[]interface{}{strings.NewReader("λx : unit. *"), ""},
 			[]interface{}{
 				&AbsExpr{
-					expr{&UnitType{}},
+					expr{},
+					&UnitType{},
 					"x",
 					&UnitExpr{expr{&UnitType{}}},
 				},
@@ -578,7 +590,8 @@ func TestArrowType(t *testing.T) {
 			[]interface{}{strings.NewReader("λx : bool → bool . x y"), ""},
 			[]interface{}{
 				&AbsExpr{
-					expr{&ArrowType{typ{}, &BoolType{}, &BoolType{}}},
+					expr{},
+					&ArrowType{typ{}, &BoolType{}, &BoolType{}},
 					"x",
 					&AppExpr{
 						expr{},
@@ -595,11 +608,12 @@ func TestArrowType(t *testing.T) {
 			[]interface{}{strings.NewReader("λx : bool → bool → bool . x y z"), ""},
 			[]interface{}{
 				&AbsExpr{
-					expr{&ArrowType{
+					expr{},
+					&ArrowType{
 						typ{}, &BoolType{}, &ArrowType{
 							typ{}, &BoolType{}, &BoolType{},
 						},
-					}},
+					},
 					"x",
 					&AppExpr{
 						expr{},
@@ -620,13 +634,14 @@ func TestArrowType(t *testing.T) {
 			[]interface{}{strings.NewReader("λx : bool → bool → bool → int . (x y z) + 3"), ""},
 			[]interface{}{
 				&AbsExpr{
-					expr{&ArrowType{
+					expr{},
+					&ArrowType{
 						typ{}, &BoolType{}, &ArrowType{
 							typ{}, &BoolType{}, &ArrowType{
 								typ{}, &BoolType{}, &IntType{},
 							},
 						},
-					}},
+					},
 					"x",
 					&BinaryExpr{
 						expr{},
@@ -652,12 +667,13 @@ func TestArrowType(t *testing.T) {
 			[]interface{}{strings.NewReader("λx : (bool → bool) → bool . x y z"), ""},
 			[]interface{}{
 				&AbsExpr{
-					expr{&ArrowType{
+					expr{},
+					&ArrowType{
 						typ{}, &ArrowType{
 							typ{}, &BoolType{}, &BoolType{},
 						},
 						&BoolType{},
-					}},
+					},
 					"x",
 					&AppExpr{
 						expr{},
@@ -684,9 +700,10 @@ func TestArrowProductType(t *testing.T) {
 			[]interface{}{strings.NewReader("λx : bool×int → bool . x y"), ""},
 			[]interface{}{
 				&AbsExpr{
-					expr{&ArrowType{typ{}, &ProductType{
+					expr{},
+					&ArrowType{typ{}, &ProductType{
 						typ{}, &BoolType{}, &IntType{},
-					}, &BoolType{}}},
+					}, &BoolType{}},
 					"x",
 					&AppExpr{
 						expr{},
@@ -703,9 +720,10 @@ func TestArrowProductType(t *testing.T) {
 			[]interface{}{strings.NewReader("λx : bool×(int → bool) . x y"), ""},
 			[]interface{}{
 				&AbsExpr{
-					expr{&ProductType{typ{}, &BoolType{}, &ArrowType{
+					expr{},
+					&ProductType{typ{}, &BoolType{}, &ArrowType{
 						typ{}, &IntType{}, &BoolType{},
-					}}},
+					}},
 					"x",
 					&AppExpr{
 						expr{},
@@ -729,9 +747,10 @@ func TestProductType(t *testing.T) {
 			[]interface{}{strings.NewReader("λx : bool×int×bool . x y"), ""},
 			[]interface{}{
 				&AbsExpr{
-					expr{&ProductType{typ{}, &BoolType{}, &ProductType{
+					expr{},
+					&ProductType{typ{}, &BoolType{}, &ProductType{
 						typ{}, &IntType{}, &BoolType{},
-					}}},
+					}},
 					"x",
 					&AppExpr{
 						expr{},
@@ -748,9 +767,10 @@ func TestProductType(t *testing.T) {
 			[]interface{}{strings.NewReader("λx : (bool×int)×bool . x y"), ""},
 			[]interface{}{
 				&AbsExpr{
-					expr{&ProductType{typ{}, &ProductType{
+					expr{},
+					&ProductType{typ{}, &ProductType{
 						typ{}, &BoolType{}, &IntType{},
-					}, &BoolType{}}},
+					}, &BoolType{}},
 					"x",
 					&AppExpr{
 						expr{},

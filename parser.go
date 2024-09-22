@@ -42,7 +42,8 @@ var opPrecs = map[tokenKind]int{
 	tokenOrOr:   precBool,
 }
 
-// Simple type (no polymorphism)
+// Simple type (no polymorphism). Maybe there's a more
+// efficient way to encode all that.
 type Type interface {
 	aType()
 }
@@ -84,7 +85,7 @@ type Expr interface {
 	aExpr()
 }
 
-type expr struct{
+type expr struct {
 	typ Type
 }
 
@@ -116,6 +117,13 @@ type VarExpr struct {
 
 type AbsExpr struct {
 	expr
+	// The only type information we parse optional,
+	// and pertaining to an abstraction's bounded variable.
+	//
+	// That type however is merely the left part of
+	// an ArrowType{} which'll make the type of the AbsExpr,
+	// so we can't fit it in expr.typ
+	bType Type
 	bound string
 	right Expr
 }
@@ -382,7 +390,7 @@ func (p *parser) absExpr() Expr {
 
 		p.next()
 		r := p.appExpr()
-		return &AbsExpr{expr{}, y.name, r}
+		return &AbsExpr{expr{}, &typ{}, y.name, r}
 	}
 
 	p.next()
@@ -393,18 +401,17 @@ func (p *parser) absExpr() Expr {
 	p.next()
 
 	// a type information may be supplied
-	e := expr{}
+	t := Type(&typ{})
 	if p.tok.kind == tokenColon {
 		p.next()
-		typ := p.Type()
-		e = expr{typ}
+		t = p.Type()
 	}
 
 	if p.tok.kind != tokenDot {
 		p.errf("Expecting dot after lambda variable name, got: %s", p.tok.kind.String())
 	}
 	p.next()
-	return &AbsExpr{e, n, p.appExpr()}
+	return &AbsExpr{expr{}, t, n, p.appExpr()}
 }
 
 func (p *parser) appExpr() Expr {
