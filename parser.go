@@ -173,6 +173,12 @@ func (p *parser) next() token {
 	return p.tok
 }
 
+// shortcut; trying to avoid the parsing code to dig through
+// p.tok directly.
+func (p *parser) has(t tokenKind) bool {
+	return p.tok.kind == t
+}
+
 /*
 func mapsTo() {
 }
@@ -216,7 +222,7 @@ func (p *parser) PrimitiveType() Type {
 	case tokenLParen:
 		p.next()
 		t := p.Type()
-		if p.tok.kind != tokenRParen {
+		if !p.has(tokenRParen) {
 			p.errf("Expecting left paren, got: %s", k.String())
 		}
 		p.next()
@@ -234,7 +240,7 @@ func (p *parser) PrimitiveType() Type {
 func (p *parser) ProductType() Type {
 	l := p.PrimitiveType()
 
-	for p.tok.kind == tokenProduct {
+	for p.has(tokenProduct) {
 		p.next()
 		r := p.ProductType()
 		l = &ProductType{typ{}, l, r}
@@ -248,7 +254,7 @@ func (p *parser) ProductType() Type {
 func (p *parser) ArrowType() Type {
 	l := p.ProductType()
 
-	for p.tok.kind == tokenArrow {
+	for p.has(tokenArrow) {
 		p.next()
 		r := p.ArrowType()
 		l = &ArrowType{typ{}, l, r}
@@ -313,8 +319,8 @@ func (p *parser) star() *UnitExpr {
 func (p *parser) parenExpr() Expr {
 	p.next()
 	e := p.appExpr()
-	if k := p.tok.kind; k != tokenRParen {
-		p.errf("Expecting left paren, got: %s", k.String())
+	if !p.has(tokenRParen) {
+		p.errf("Expecting left paren, got: %s", p.tok.kind.String())
 	}
 	p.next()
 	return e
@@ -383,7 +389,7 @@ func (p *parser) binaryExprs() Expr {
 func (p *parser) absExpr() Expr {
 	var n string
 
-	if p.tok.kind != tokenLambda {
+	if !p.has(tokenLambda) {
 		x := p.binaryExprs()
 
 		// is this the short form: "x. [...]" instead of "λx. [...]"
@@ -392,14 +398,14 @@ func (p *parser) absExpr() Expr {
 
 		// not a VarExpr: definitely not a short form
 		// not followed by either a dot or a colon: not a short form either
-		if !ok || ( p.tok.kind != tokenDot && p.tok.kind != tokenColon) {
+		if !ok || (!p.has(tokenDot) && !p.has(tokenColon)) {
 			return x
 		}
 
 		n = y.name
 	} else {
 		p.next()
-		if p.tok.kind != tokenName {
+		if !p.has(tokenName) {
 			p.errf("Expecting variable name after lambda, got: %s", p.tok.kind.String())
 		}
 		n = p.tok.raw
@@ -408,12 +414,12 @@ func (p *parser) absExpr() Expr {
 
 	// a type information may be supplied
 	t := Type(&typ{})
-	if p.tok.kind == tokenColon {
+	if p.has(tokenColon) {
 		p.next()
 		t = p.Type()
 	}
 
-	if p.tok.kind != tokenDot {
+	if !p.has(tokenDot) {
 		p.errf("Expecting dot after lambda variable name, got: %s", p.tok.kind.String())
 	}
 	p.next()
@@ -424,7 +430,7 @@ func (p *parser) appExpr() Expr {
 	l := p.absExpr()
 
 	// XXX too fragile?
-	for p.tok.kind != tokenEOF && p.tok.kind != tokenRParen {
+	for !p.has(tokenEOF) && !p.has(tokenRParen) {
 		r := p.absExpr()
 		l = &AppExpr{expr{}, l, r}
 	}
@@ -451,7 +457,7 @@ func parse(in io.Reader, fn string) (Expr, error) {
 	p.init(in, fn)
 	e, err := p.parse()
 	// remaining input is unexpected
-	if err == nil && p.tok.kind != tokenEOF {
+	if err == nil && !p.has(tokenEOF) {
 		err = p.errHeref("Unexpected token: %s", p.tok.kind.String())
 	}
 	return e, err
