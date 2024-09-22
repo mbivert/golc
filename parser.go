@@ -381,26 +381,30 @@ func (p *parser) binaryExprs() Expr {
 }
 
 func (p *parser) absExpr() Expr {
+	var n string
+
 	if p.tok.kind != tokenLambda {
 		x := p.binaryExprs()
 
 		// is this the short form: "x. [...]" instead of "λx. [...]"
+		// (eventually with a type annotation)
 		y, ok := x.(*VarExpr)
-		if !ok || p.tok.kind != tokenDot {
+
+		// not a VarExpr: definitely not a short form
+		// not followed by either a dot or a colon: not a short form either
+		if !ok || ( p.tok.kind != tokenDot && p.tok.kind != tokenColon) {
 			return x
 		}
 
+		n = y.name
+	} else {
 		p.next()
-		r := p.appExpr()
-		return &AbsExpr{expr{}, &typ{}, y.name, r}
+		if p.tok.kind != tokenName {
+			p.errf("Expecting variable name after lambda, got: %s", p.tok.kind.String())
+		}
+		n = p.tok.raw
+		p.next()
 	}
-
-	p.next()
-	if p.tok.kind != tokenName {
-		p.errf("Expecting variable name after lambda, got: %s", p.tok.kind.String())
-	}
-	n := p.tok.raw
-	p.next()
 
 	// a type information may be supplied
 	t := Type(&typ{})

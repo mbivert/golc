@@ -692,6 +692,117 @@ func TestArrowType(t *testing.T) {
 	})
 }
 
+// same as TestArrowType(), but systematically using the short
+// form (x: $type . $expr instead of λx: $type . $expr
+func TestArrowTypeShort(t *testing.T) {
+	ftests.Run(t, []ftests.Test{
+		{
+			"bool → bool",
+			parse,
+			[]any{strings.NewReader("x : bool → bool . x y"), ""},
+			[]any{
+				&AbsExpr{
+					expr{},
+					&ArrowType{typ{}, &BoolType{}, &BoolType{}},
+					"x",
+					&AppExpr{
+						expr{},
+						&VarExpr{expr{}, "x"},
+						&VarExpr{expr{}, "y"},
+					},
+				},
+				nil,
+			},
+		},
+		{
+			"bool → bool → bool (right associative: bool → (bool → bool))",
+			parse,
+			[]any{strings.NewReader("x : bool → bool → bool . x y z"), ""},
+			[]any{
+				&AbsExpr{
+					expr{},
+					&ArrowType{
+						typ{}, &BoolType{}, &ArrowType{
+							typ{}, &BoolType{}, &BoolType{},
+						},
+					},
+					"x",
+					&AppExpr{
+						expr{},
+						&AppExpr{
+							expr{},
+							&VarExpr{expr{}, "x"},
+							&VarExpr{expr{}, "y"},
+						},
+						&VarExpr{expr{}, "z"},
+					},
+				},
+				nil,
+			},
+		},
+		{
+			"bool → bool → bool → int",
+			parse,
+			[]any{strings.NewReader("x : bool → bool → bool → int . (x y z) + 3"), ""},
+			[]any{
+				&AbsExpr{
+					expr{},
+					&ArrowType{
+						typ{}, &BoolType{}, &ArrowType{
+							typ{}, &BoolType{}, &ArrowType{
+								typ{}, &BoolType{}, &IntType{},
+							},
+						},
+					},
+					"x",
+					&BinaryExpr{
+						expr{},
+						tokenPlus,
+						&AppExpr{
+							expr{},
+							&AppExpr{
+								expr{},
+								&VarExpr{expr{}, "x"},
+								&VarExpr{expr{}, "y"},
+							},
+							&VarExpr{expr{}, "z"},
+						},
+						&IntExpr{expr{&IntType{}}, 3},
+					},
+				},
+				nil,
+			},
+		},
+		{
+			"(bool → bool) → bool (manually altered associativity)",
+			parse,
+			[]any{strings.NewReader("x : (bool → bool) → bool . x y z"), ""},
+			[]any{
+				&AbsExpr{
+					expr{},
+					&ArrowType{
+						typ{}, &ArrowType{
+							typ{}, &BoolType{}, &BoolType{},
+						},
+						&BoolType{},
+					},
+					"x",
+					&AppExpr{
+						expr{},
+						&AppExpr{
+							expr{},
+							&VarExpr{expr{}, "x"},
+							&VarExpr{expr{}, "y"},
+						},
+						&VarExpr{expr{}, "z"},
+					},
+				},
+				nil,
+			},
+		},
+	})
+}
+
 // "we adopt the convention that × binds stronger than →"
 func TestArrowProductType(t *testing.T) {
 	ftests.Run(t, []ftests.Test{
