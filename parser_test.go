@@ -674,3 +674,92 @@ func TestArrowType(t *testing.T) {
 		},
 	})
 }
+
+// "we adopt the convention that × binds stronger than →"
+func TestArrowProductType(t *testing.T) {
+	doTests(t, []test{
+		{
+			"bool × int → bool := (bool×int) → bool",
+			parse,
+			[]interface{}{strings.NewReader("λx : bool×int → bool . x y"), ""},
+			[]interface{}{
+				&AbsExpr{
+					expr{&ArrowType{typ{}, &ProductType{
+						typ{}, &BoolType{}, &IntType{},
+					}, &BoolType{}}},
+					"x",
+					&AppExpr{
+						expr{},
+						&VarExpr{expr{}, "x"},
+						&VarExpr{expr{}, "y"},
+					},
+				},
+				nil,
+			},
+		},
+		{
+			"bool × (int → bool)",
+			parse,
+			[]interface{}{strings.NewReader("λx : bool×(int → bool) . x y"), ""},
+			[]interface{}{
+				&AbsExpr{
+					expr{&ProductType{typ{}, &BoolType{}, &ArrowType{
+						typ{}, &IntType{}, &BoolType{},
+					}}},
+					"x",
+					&AppExpr{
+						expr{},
+						&VarExpr{expr{}, "x"},
+						&VarExpr{expr{}, "y"},
+					},
+				},
+				nil,
+			},
+		},
+	})
+}
+
+// again, given what's in qlambdabook.pdf, we assume ×
+// to be right-associative.
+func TestProductType(t *testing.T) {
+	doTests(t, []test{
+		{
+			"bool × int × bool := bool×(int×bool)",
+			parse,
+			[]interface{}{strings.NewReader("λx : bool×int×bool . x y"), ""},
+			[]interface{}{
+				&AbsExpr{
+					expr{&ProductType{typ{}, &BoolType{}, &ProductType{
+						typ{}, &IntType{}, &BoolType{},
+					}}},
+					"x",
+					&AppExpr{
+						expr{},
+						&VarExpr{expr{}, "x"},
+						&VarExpr{expr{}, "y"},
+					},
+				},
+				nil,
+			},
+		},
+		{
+			"(bool × int) × bool",
+			parse,
+			[]interface{}{strings.NewReader("λx : (bool×int)×bool . x y"), ""},
+			[]interface{}{
+				&AbsExpr{
+					expr{&ProductType{typ{}, &ProductType{
+						typ{}, &BoolType{}, &IntType{},
+					}, &BoolType{}}},
+					"x",
+					&AppExpr{
+						expr{},
+						&VarExpr{expr{}, "x"},
+						&VarExpr{expr{}, "y"},
+					},
+				},
+				nil,
+			},
+		},
+	})
+}

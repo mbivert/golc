@@ -218,8 +218,19 @@ func (p *parser) PrimitiveType() Type {
 	return nil
 }
 
+// NOTE: in qlambdabook.pdf, <M1, M2, ... > := <M1, <M2, ...>>,
+// hence it's only natural for × to be right associative as well
+// (such a shortcut isn't articulated in the λ-calculus notes)
 func (p *parser) ProductType() Type {
-	return p.PrimitiveType()
+	l := p.PrimitiveType()
+
+	for p.tok.kind == tokenProduct {
+		p.next()
+		r := p.ProductType()
+		l = &ProductType{typ{}, l, r}
+	}
+
+	return l
 }
 
 // product (×) binds stronger than arrows; arrow is right
