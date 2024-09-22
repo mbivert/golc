@@ -117,12 +117,12 @@ var many = map[string]tokenKind{
 	"true":   tokenBool,
 	"false":  tokenBool,
 
-	"bool":   tokenTBool,
-	"int":    tokenTInt,
-	"float":  tokenTFloat,
+	"bool":  tokenTBool,
+	"int":   tokenTInt,
+	"float": tokenTFloat,
 	// NOTE: we could have used an integer 1 and better
 	// categorize it during parsing, but this is just simpler.
-	"unit":   tokenTUnit,
+	"unit": tokenTUnit,
 
 	// Untested. We're also missing all our gates:
 	//	H (Hadamard) N (not) Vtheta (phase shift)

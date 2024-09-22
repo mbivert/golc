@@ -2,6 +2,8 @@ package main
 
 import (
 	"testing"
+
+	"github.com/mbivert/ftests"
 )
 
 // True
@@ -51,106 +53,106 @@ var and = &AbsExpr{
 }
 
 func TestFreeVars(t *testing.T) {
-	doTests(t, []test{
+	ftests.Run(t, []ftests.Test{
 		{
 			"scalar expression: int",
 			freeVars,
-			[]interface{}{mustParse("123")},
-			[]interface{}{map[string]bool{}},
+			[]any{mustParse("123")},
+			[]any{map[string]bool{}},
 		},
 		{
 			"scalar expression: bool",
 			freeVars,
-			[]interface{}{mustParse("true")},
-			[]interface{}{map[string]bool{}},
+			[]any{mustParse("true")},
+			[]any{map[string]bool{}},
 		},
 		{
 			"scalar expression: float",
 			freeVars,
-			[]interface{}{mustParse("42.42")},
-			[]interface{}{map[string]bool{}},
+			[]any{mustParse("42.42")},
+			[]any{map[string]bool{}},
 		},
 		{
 			"free variable",
 			freeVars,
-			[]interface{}{mustParse("x")},
-			[]interface{}{map[string]bool{"x":true}},
+			[]any{mustParse("x")},
+			[]any{map[string]bool{"x": true}},
 		},
 		{
 			"simple abstraction, no free variable",
 			freeVars,
-			[]interface{}{mustParse("x. x")},
-			[]interface{}{map[string]bool{}},
+			[]any{mustParse("x. x")},
+			[]any{map[string]bool{}},
 		},
 		{
 			"simple abstraction, one free variable",
 			freeVars,
-			[]interface{}{mustParse("x. y")},
-			[]interface{}{map[string]bool{
-				"y" : true,
+			[]any{mustParse("x. y")},
+			[]any{map[string]bool{
+				"y": true,
 			}},
 		},
 		{
 			"abstraction + applications",
 			freeVars,
-			[]interface{}{mustParse("x. x y z")},
-			[]interface{}{map[string]bool{
-				"y" : true,
-				"z" : true,
+			[]any{mustParse("x. x y z")},
+			[]any{map[string]bool{
+				"y": true,
+				"z": true,
 			}},
 		},
 	})
 }
 
 func TestallVars(t *testing.T) {
-	doTests(t, []test{
+	ftests.Run(t, []ftests.Test{
 		{
 			"scalar expression: int",
 			allVars,
-			[]interface{}{mustParse("123")},
-			[]interface{}{map[string]bool{}},
+			[]any{mustParse("123")},
+			[]any{map[string]bool{}},
 		},
 		{
 			"scalar expression: bool",
 			allVars,
-			[]interface{}{mustParse("true")},
-			[]interface{}{map[string]bool{}},
+			[]any{mustParse("true")},
+			[]any{map[string]bool{}},
 		},
 		{
 			"scalar expression: float",
 			allVars,
-			[]interface{}{mustParse("42.42")},
-			[]interface{}{map[string]bool{}},
+			[]any{mustParse("42.42")},
+			[]any{map[string]bool{}},
 		},
 		{
 			"free variable",
 			allVars,
-			[]interface{}{mustParse("x")},
-			[]interface{}{map[string]bool{"x":true}},
+			[]any{mustParse("x")},
+			[]any{map[string]bool{"x": true}},
 		},
 		{
 			"simple abstraction, no free variable, one bound",
 			allVars,
-			[]interface{}{mustParse("x. x")},
-			[]interface{}{map[string]bool{"x" : true}},
+			[]any{mustParse("x. x")},
+			[]any{map[string]bool{"x": true}},
 		},
 		{
 			"simple abstraction, one free variable, one bound",
 			allVars,
-			[]interface{}{mustParse("x. y")},
-			[]interface{}{map[string]bool{
-				"x" : true,
-				"y" : true,
+			[]any{mustParse("x. y")},
+			[]any{map[string]bool{
+				"x": true,
+				"y": true,
 			}},
 		},
 		{
 			"abstraction + applications",
 			allVars,
-			[]interface{}{mustParse("x. x y z")},
-			[]interface{}{map[string]bool{
-				"x" : true,
-				"y" : true,
-				"z" : true,
+			[]any{mustParse("x. x y z")},
+			[]any{map[string]bool{
+				"x": true,
+				"y": true,
+				"z": true,
 			}},
 		},
 	})
@@ -158,83 +160,83 @@ func TestallVars(t *testing.T) {
 
 // TODO: a bit light
 func TestPrettyPrint(t *testing.T) {
-	doTests(t, []test{
+	ftests.Run(t, []ftests.Test{
 		{
 			"bare int",
 			prettyPrint,
-			[]interface{}{mustParse("123")},
-			[]interface{}{"123"},
+			[]any{mustParse("123")},
+			[]any{"123"},
 		},
 		{
 			"bare float",
 			prettyPrint,
-			[]interface{}{mustParse("123.42")},
-			[]interface{}{"123.42"},
+			[]any{mustParse("123.42")},
+			[]any{"123.42"},
 		},
 		{
 			"bare bool",
 			prettyPrint,
-			[]interface{}{mustParse("true")},
-			[]interface{}{"true"},
+			[]any{mustParse("true")},
+			[]any{"true"},
 		},
 		{
 			"bare variable",
 			prettyPrint,
-			[]interface{}{mustParse("someVar")},
-			[]interface{}{"someVar"},
+			[]any{mustParse("someVar")},
+			[]any{"someVar"},
 		},
 		{
 			"simple abstraction (id)",
 			prettyPrint,
-			[]interface{}{mustParse("λ x. x")},
-			[]interface{}{"(λx. x)"},
+			[]any{mustParse("λ x. x")},
+			[]any{"(λx. x)"},
 		},
 		{
 			"arithmetic",
 			prettyPrint,
-			[]interface{}{mustParse("(2+2)*3")},
-			[]interface{}{"((2 + 2) * 3)"},
+			[]any{mustParse("(2+2)*3")},
+			[]any{"((2 + 2) * 3)"},
 		},
 		{
 			"imbricated abstraction + application",
 			prettyPrint,
-			[]interface{}{mustParse("λx. y. x y")},
-			[]interface{}{"(λx. y. (x y))"},
+			[]any{mustParse("λx. y. x y")},
+			[]any{"(λx. y. (x y))"},
 		},
 		{
 			"and",
 			prettyPrint,
-			[]interface{}{and},
-			[]interface{}{"(λx. y. (x y (λx. y. y)))"},
+			[]any{and},
+			[]any{"(λx. y. (x y (λx. y. y)))"},
 		},
 		{
 			"(((x y) q) (z p))",
 			prettyPrint,
-			[]interface{}{mustParse("(((x y) q) (z p))")},
-			[]interface{}{"(x y q (z p))"},
+			[]any{mustParse("(((x y) q) (z p))")},
+			[]any{"(x y q (z p))"},
 		},
 	})
 }
 
 func TestGetFresh(t *testing.T) {
-	doTests(t, []test{
+	ftests.Run(t, []ftests.Test{
 		{
 			"empty map",
 			getFresh,
-			[]interface{}{map[string]bool{}},
-			[]interface{}{"x0"},
+			[]any{map[string]bool{}},
+			[]any{"x0"},
 		},
 		{
 			"not empty, but x0 still free",
 			getFresh,
-			[]interface{}{map[string]bool{"x":true,"y":true}},
-			[]interface{}{"x0"},
+			[]any{map[string]bool{"x": true, "y": true}},
+			[]any{"x0"},
 		},
 		{
 			"x0 already used",
 			getFresh,
-			[]interface{}{map[string]bool{"x0":true}},
-			[]interface{}{"x1"},
+			[]any{map[string]bool{"x0": true}},
+			[]any{"x1"},
 		},
 	})
 }

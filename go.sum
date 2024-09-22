@@ -1,3 +1,5 @@
+github.com/mbivert/ftests v1.0.0 h1:WS+k5h1ld9iLtmakNZnZegD1adE4oIPAx37qU2Icdtg=
+github.com/mbivert/ftests v1.0.0/go.mod h1:TavuW1VtBN05BV0QcUKua45z4bggEdsihxpBdqJABHc=
 golang.org/x/mod v0.19.0 h1:fEdghXQSo20giMthA7cd28ZC+jts4amQ3YMXiP5oMQ8=
 golang.org/x/mod v0.19.0/go.mod h1:hTbmBsO62+eylJbnUtE2MGJUyE7QWk4xUqPFrRgJ+7c=
 golang.org/x/sync v0.7.0 h1:YsImfSBoP9QPYL0xyKJPq0gcaJdG3rInoqxTWbfQu9M=

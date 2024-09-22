@@ -4,7 +4,8 @@ import (
 	"fmt"
 	"strings"
 	"testing"
-	// "encoding/json"
+
+	"github.com/mbivert/ftests"
 )
 
 // True
@@ -37,55 +38,55 @@ var T = &AbsExpr{
  * separately.
  */
 func TestTypelessParse(t *testing.T) {
-	doTests(t, []test{
+	ftests.Run(t, []ftests.Test{
 		{
 			"empty input",
 			parse,
-			[]interface{}{strings.NewReader(""), ""},
-			[]interface{}{nil, fmt.Errorf(":1:1: Unexpected token: EOF")},
+			[]any{strings.NewReader(""), ""},
+			[]any{nil, fmt.Errorf(":1:1: Unexpected token: EOF")},
 		},
 		{
 			"single int",
 			parse,
-			[]interface{}{strings.NewReader("  1234"), ""},
-			[]interface{}{&IntExpr{expr{&IntType{}}, 1234}, nil},
+			[]any{strings.NewReader("  1234"), ""},
+			[]any{&IntExpr{expr{&IntType{}}, 1234}, nil},
 		},
 		{
 			"single (int)",
 			parse,
-			[]interface{}{strings.NewReader("  (1234)"), ""},
-			[]interface{}{&IntExpr{expr{&IntType{}}, 1234}, nil},
+			[]any{strings.NewReader("  (1234)"), ""},
+			[]any{&IntExpr{expr{&IntType{}}, 1234}, nil},
 		},
 		{
 			"single ((int))",
 			parse,
-			[]interface{}{strings.NewReader("  ((1234))"), ""},
-			[]interface{}{&IntExpr{expr{&IntType{}}, 1234}, nil},
+			[]any{strings.NewReader("  ((1234))"), ""},
+			[]any{&IntExpr{expr{&IntType{}}, 1234}, nil},
 		},
 		{
 			"single float",
 			parse,
-			[]interface{}{strings.NewReader("  1234.45 "), ""},
-			[]interface{}{&FloatExpr{expr{&FloatType{}}, 1234.45}, nil},
+			[]any{strings.NewReader("  1234.45 "), ""},
+			[]any{&FloatExpr{expr{&FloatType{}}, 1234.45}, nil},
 		},
 		{
 			"single boolean",
 			parse,
-			[]interface{}{strings.NewReader("  true "), ""},
-			[]interface{}{&BoolExpr{expr{&BoolType{}}, true}, nil},
+			[]any{strings.NewReader("  true "), ""},
+			[]any{&BoolExpr{expr{&BoolType{}}, true}, nil},
 		},
 		{
 			"single boolean (bis)",
 			parse,
-			[]interface{}{strings.NewReader("  false "), ""},
-			[]interface{}{&BoolExpr{expr{&BoolType{}}, false}, nil},
+			[]any{strings.NewReader("  false "), ""},
+			[]any{&BoolExpr{expr{&BoolType{}}, false}, nil},
 		},
 		/*
 			{
 				"single int + garbage",
 				parse,
-				[]interface{}{strings.NewReader("  1234 12"), ""},
-				[]interface{}{
+				[]any{strings.NewReader("  1234 12"), ""},
+				[]any{
 					&IntExpr{expr{&IntType{}}, 1234},
 					fmt.Errorf(":1:8: Unexpected token: int64"),
 				},
@@ -94,8 +95,8 @@ func TestTypelessParse(t *testing.T) {
 		{
 			"two consecutives ints: 'bad' function call, still parses OK",
 			parse,
-			[]interface{}{strings.NewReader("  1234 12"), ""},
-			[]interface{}{
+			[]any{strings.NewReader("  1234 12"), ""},
+			[]any{
 				&AppExpr{expr{}, &IntExpr{expr{&IntType{}}, 1234}, &IntExpr{expr{&IntType{}}, 12}},
 				nil,
 			},
@@ -103,8 +104,8 @@ func TestTypelessParse(t *testing.T) {
 		{
 			"unary expression: -12",
 			parse,
-			[]interface{}{strings.NewReader("  - 12"), ""},
-			[]interface{}{
+			[]any{strings.NewReader("  - 12"), ""},
+			[]any{
 				&UnaryExpr{expr{}, tokenMinus, &IntExpr{expr{&IntType{}}, 12}},
 				nil,
 			},
@@ -112,8 +113,8 @@ func TestTypelessParse(t *testing.T) {
 		{
 			"unary expression: +.12",
 			parse,
-			[]interface{}{strings.NewReader("  +. 12"), ""},
-			[]interface{}{
+			[]any{strings.NewReader("  +. 12"), ""},
+			[]any{
 				&UnaryExpr{expr{}, tokenFPlus, &IntExpr{expr{&IntType{}}, 12}},
 				nil,
 			},
@@ -121,8 +122,8 @@ func TestTypelessParse(t *testing.T) {
 		{
 			"unary expressions: ++.12",
 			parse,
-			[]interface{}{strings.NewReader("  ++. 12"), ""},
-			[]interface{}{
+			[]any{strings.NewReader("  ++. 12"), ""},
+			[]any{
 				&UnaryExpr{
 					expr{},
 					tokenPlus,
@@ -134,20 +135,20 @@ func TestTypelessParse(t *testing.T) {
 		{
 			"single float in parentheses",
 			parse,
-			[]interface{}{strings.NewReader("  (1234.45) "), ""},
-			[]interface{}{&FloatExpr{expr{&FloatType{}}, 1234.45}, nil},
+			[]any{strings.NewReader("  (1234.45) "), ""},
+			[]any{&FloatExpr{expr{&FloatType{}}, 1234.45}, nil},
 		},
 		{
 			"single float in two pairs of parentheses",
 			parse,
-			[]interface{}{strings.NewReader("  (  (1234.45)\t) "), ""},
-			[]interface{}{&FloatExpr{expr{&FloatType{}}, 1234.45}, nil},
+			[]any{strings.NewReader("  (  (1234.45)\t) "), ""},
+			[]any{&FloatExpr{expr{&FloatType{}}, 1234.45}, nil},
 		},
 		{
 			"Missing parenthesis",
 			parse,
-			[]interface{}{strings.NewReader("  (  (1234.45)\t "), ""},
-			[]interface{}{
+			[]any{strings.NewReader("  (  (1234.45)\t "), ""},
+			[]any{
 				nil,
 				fmt.Errorf(":1:16: Expecting left paren, got: EOF"),
 			},
@@ -155,8 +156,8 @@ func TestTypelessParse(t *testing.T) {
 		{
 			"single float in two pairs of parentheses, many unary operators",
 			parse,
-			[]interface{}{strings.NewReader("  +.(  -  (-.-1234.45)\t) "), ""},
-			[]interface{}{
+			[]any{strings.NewReader("  +.(  -  (-.-1234.45)\t) "), ""},
+			[]any{
 				&UnaryExpr{
 					expr{},
 					tokenFPlus,
@@ -180,8 +181,8 @@ func TestTypelessParse(t *testing.T) {
 		{
 			"left-associativy, addition",
 			parse,
-			[]interface{}{strings.NewReader("1+2+ 3 "), ""},
-			[]interface{}{
+			[]any{strings.NewReader("1+2+ 3 "), ""},
+			[]any{
 				&BinaryExpr{
 					expr{},
 					tokenPlus,
@@ -199,8 +200,8 @@ func TestTypelessParse(t *testing.T) {
 		{
 			"left-associativy, addition/substraction: 1-42+12 ≠ 1-(42+12)",
 			parse,
-			[]interface{}{strings.NewReader("1-42+12"), ""},
-			[]interface{}{
+			[]any{strings.NewReader("1-42+12"), ""},
+			[]any{
 				&BinaryExpr{
 					expr{},
 					tokenPlus,
@@ -218,8 +219,8 @@ func TestTypelessParse(t *testing.T) {
 		{
 			"multiplication has precedence over addition",
 			parse,
-			[]interface{}{strings.NewReader("1.*.2.+. 3. "), ""},
-			[]interface{}{
+			[]any{strings.NewReader("1.*.2.+. 3. "), ""},
+			[]any{
 				&BinaryExpr{
 					expr{},
 					tokenFPlus,
@@ -237,8 +238,8 @@ func TestTypelessParse(t *testing.T) {
 		{
 			"random expression",
 			parse,
-			[]interface{}{strings.NewReader("1.*.(2.+. 3.)"), ""},
-			[]interface{}{
+			[]any{strings.NewReader("1.*.(2.+. 3.)"), ""},
+			[]any{
 				&BinaryExpr{
 					expr{},
 					tokenFStar,
@@ -256,8 +257,8 @@ func TestTypelessParse(t *testing.T) {
 		{
 			"Comparison: x < 3",
 			parse,
-			[]interface{}{strings.NewReader("x < 3"), ""},
-			[]interface{}{
+			[]any{strings.NewReader("x < 3"), ""},
+			[]any{
 				&BinaryExpr{
 					expr{},
 					tokenLess,
@@ -270,8 +271,8 @@ func TestTypelessParse(t *testing.T) {
 		{
 			"Comparison: x < (3+67)",
 			parse,
-			[]interface{}{strings.NewReader("x < (3 +67)"), ""},
-			[]interface{}{
+			[]any{strings.NewReader("x < (3 +67)"), ""},
+			[]any{
 				&BinaryExpr{
 					expr{},
 					tokenLess,
@@ -289,8 +290,8 @@ func TestTypelessParse(t *testing.T) {
 		{
 			"1- 3 * 5 + (1 + 34  )/ 3.",
 			parse,
-			[]interface{}{strings.NewReader("1- 3 * 5 + (1 + 34  )/ 3."), ""},
-			[]interface{}{
+			[]any{strings.NewReader("1- 3 * 5 + (1 + 34  )/ 3."), ""},
+			[]any{
 				&BinaryExpr{
 					expr{},
 					tokenPlus,
@@ -323,8 +324,8 @@ func TestTypelessParse(t *testing.T) {
 		{
 			"0	/ 78 * 12",
 			parse,
-			[]interface{}{strings.NewReader("0	/ 78 * 12"), ""},
-			[]interface{}{
+			[]any{strings.NewReader("0	/ 78 * 12"), ""},
+			[]any{
 				&BinaryExpr{
 					expr{},
 					tokenStar,
@@ -342,8 +343,8 @@ func TestTypelessParse(t *testing.T) {
 		{
 			"basic abstraction",
 			parse,
-			[]interface{}{strings.NewReader("λx.x"), ""},
-			[]interface{}{
+			[]any{strings.NewReader("λx.x"), ""},
+			[]any{
 				&AbsExpr{
 					expr{},
 					&typ{},
@@ -356,8 +357,8 @@ func TestTypelessParse(t *testing.T) {
 		{
 			"basic abstraction (optional λ)",
 			parse,
-			[]interface{}{strings.NewReader("x.x"), ""},
-			[]interface{}{
+			[]any{strings.NewReader("x.x"), ""},
+			[]any{
 				&AbsExpr{
 					expr{},
 					&typ{},
@@ -370,8 +371,8 @@ func TestTypelessParse(t *testing.T) {
 		{
 			"abstraction: syntax error (missing dot)",
 			parse,
-			[]interface{}{strings.NewReader("\nλx x"), ""},
-			[]interface{}{
+			[]any{strings.NewReader("\nλx x"), ""},
+			[]any{
 				nil,
 				fmt.Errorf(":2:4: Expecting dot after lambda variable name, got: name"),
 			},
@@ -379,8 +380,8 @@ func TestTypelessParse(t *testing.T) {
 		{
 			"abstraction: syntax error (missing variable name)",
 			parse,
-			[]interface{}{strings.NewReader("\nλ.x x"), ""},
-			[]interface{}{
+			[]any{strings.NewReader("\nλ.x x"), ""},
+			[]any{
 				nil,
 				fmt.Errorf(":2:2: Expecting variable name after lambda, got: ."),
 			},
@@ -388,8 +389,8 @@ func TestTypelessParse(t *testing.T) {
 		{
 			"abstraction: syntax error (missing variable name)",
 			parse,
-			[]interface{}{strings.NewReader("λx. "), ""},
-			[]interface{}{
+			[]any{strings.NewReader("λx. "), ""},
+			[]any{
 				nil,
 				fmt.Errorf(":1:5: Unexpected token: EOF"),
 			},
@@ -397,8 +398,8 @@ func TestTypelessParse(t *testing.T) {
 		{
 			"(λx. x x) (λx. x x)",
 			parse,
-			[]interface{}{strings.NewReader("(λx. x x) (λx. x x)"), ""},
-			[]interface{}{
+			[]any{strings.NewReader("(λx. x x) (λx. x x)"), ""},
+			[]any{
 				&AppExpr{
 					expr{},
 					&AbsExpr{
@@ -428,26 +429,26 @@ func TestTypelessParse(t *testing.T) {
 		{
 			"(λx. (λy. x))",
 			parse,
-			[]interface{}{strings.NewReader("(λx. (λy. x))"), ""},
-			[]interface{}{T, nil},
+			[]any{strings.NewReader("(λx. (λy. x))"), ""},
+			[]any{T, nil},
 		},
 		{
 			"(λx. λy. x)",
 			parse,
-			[]interface{}{strings.NewReader("(λx. λy. x)"), ""},
-			[]interface{}{T, nil},
+			[]any{strings.NewReader("(λx. λy. x)"), ""},
+			[]any{T, nil},
 		},
 		{
 			"λx.λy.x",
 			parse,
-			[]interface{}{strings.NewReader("λx.λy.x"), ""},
-			[]interface{}{T, nil},
+			[]any{strings.NewReader("λx.λy.x"), ""},
+			[]any{T, nil},
 		},
 		{
 			"x. (one (two (three (four five))))",
 			parse,
-			[]interface{}{strings.NewReader("x. (one (two (three (four five))))"), ""},
-			[]interface{}{
+			[]any{strings.NewReader("x. (one (two (three (four five))))"), ""},
+			[]any{
 				&AbsExpr{
 					expr{},
 					&typ{},
@@ -476,8 +477,8 @@ func TestTypelessParse(t *testing.T) {
 		{
 			"x. one two three four five",
 			parse,
-			[]interface{}{strings.NewReader("x. one two three four five"), ""},
-			[]interface{}{
+			[]any{strings.NewReader("x. one two three four five"), ""},
+			[]any{
 				&AbsExpr{
 					expr{},
 					&typ{},
@@ -507,12 +508,12 @@ func TestTypelessParse(t *testing.T) {
 }
 
 func TestPrimitiveType(t *testing.T) {
-	doTests(t, []test{
+	ftests.Run(t, []ftests.Test{
 		{
 			"boolean",
 			parse,
-			[]interface{}{strings.NewReader("λx : bool . x && y"), ""},
-			[]interface{}{
+			[]any{strings.NewReader("λx : bool . x && y"), ""},
+			[]any{
 				&AbsExpr{
 					expr{},
 					&BoolType{},
@@ -530,8 +531,8 @@ func TestPrimitiveType(t *testing.T) {
 		{
 			"int",
 			parse,
-			[]interface{}{strings.NewReader("λx : int . x + y"), ""},
-			[]interface{}{
+			[]any{strings.NewReader("λx : int . x + y"), ""},
+			[]any{
 				&AbsExpr{
 					expr{},
 					&IntType{},
@@ -549,8 +550,8 @@ func TestPrimitiveType(t *testing.T) {
 		{
 			"float",
 			parse,
-			[]interface{}{strings.NewReader("λx : float . x +. y"), ""},
-			[]interface{}{
+			[]any{strings.NewReader("λx : float . x +. y"), ""},
+			[]any{
 				&AbsExpr{
 					expr{},
 					&FloatType{},
@@ -568,8 +569,8 @@ func TestPrimitiveType(t *testing.T) {
 		{
 			"float",
 			parse,
-			[]interface{}{strings.NewReader("λx : unit. *"), ""},
-			[]interface{}{
+			[]any{strings.NewReader("λx : unit. *"), ""},
+			[]any{
 				&AbsExpr{
 					expr{},
 					&UnitType{},
@@ -583,12 +584,12 @@ func TestPrimitiveType(t *testing.T) {
 }
 
 func TestArrowType(t *testing.T) {
-	doTests(t, []test{
+	ftests.Run(t, []ftests.Test{
 		{
 			"bool → bool",
 			parse,
-			[]interface{}{strings.NewReader("λx : bool → bool . x y"), ""},
-			[]interface{}{
+			[]any{strings.NewReader("λx : bool → bool . x y"), ""},
+			[]any{
 				&AbsExpr{
 					expr{},
 					&ArrowType{typ{}, &BoolType{}, &BoolType{}},
@@ -605,8 +606,8 @@ func TestArrowType(t *testing.T) {
 		{
 			"bool → bool → bool (right associative: bool → (bool → bool))",
 			parse,
-			[]interface{}{strings.NewReader("λx : bool → bool → bool . x y z"), ""},
-			[]interface{}{
+			[]any{strings.NewReader("λx : bool → bool → bool . x y z"), ""},
+			[]any{
 				&AbsExpr{
 					expr{},
 					&ArrowType{
@@ -631,8 +632,8 @@ func TestArrowType(t *testing.T) {
 		{
 			"bool → bool → bool → int",
 			parse,
-			[]interface{}{strings.NewReader("λx : bool → bool → bool → int . (x y z) + 3"), ""},
-			[]interface{}{
+			[]any{strings.NewReader("λx : bool → bool → bool → int . (x y z) + 3"), ""},
+			[]any{
 				&AbsExpr{
 					expr{},
 					&ArrowType{
@@ -664,8 +665,8 @@ func TestArrowType(t *testing.T) {
 		{
 			"(bool → bool) → bool (manually altered associativity)",
 			parse,
-			[]interface{}{strings.NewReader("λx : (bool → bool) → bool . x y z"), ""},
-			[]interface{}{
+			[]any{strings.NewReader("λx : (bool → bool) → bool . x y z"), ""},
+			[]any{
 				&AbsExpr{
 					expr{},
 					&ArrowType{
@@ -693,12 +694,12 @@ func TestArrowType(t *testing.T) {
 
 // "we adopt the convention that × binds stronger than →"
 func TestArrowProductType(t *testing.T) {
-	doTests(t, []test{
+	ftests.Run(t, []ftests.Test{
 		{
 			"bool × int → bool := (bool×int) → bool",
 			parse,
-			[]interface{}{strings.NewReader("λx : bool×int → bool . x y"), ""},
-			[]interface{}{
+			[]any{strings.NewReader("λx : bool×int → bool . x y"), ""},
+			[]any{
 				&AbsExpr{
 					expr{},
 					&ArrowType{typ{}, &ProductType{
@@ -717,8 +718,8 @@ func TestArrowProductType(t *testing.T) {
 		{
 			"bool × (int → bool)",
 			parse,
-			[]interface{}{strings.NewReader("λx : bool×(int → bool) . x y"), ""},
-			[]interface{}{
+			[]any{strings.NewReader("λx : bool×(int → bool) . x y"), ""},
+			[]any{
 				&AbsExpr{
 					expr{},
 					&ProductType{typ{}, &BoolType{}, &ArrowType{
@@ -740,12 +741,12 @@ func TestArrowProductType(t *testing.T) {
 // again, given what's in qlambdabook.pdf, we assume ×
 // to be right-associative.
 func TestProductType(t *testing.T) {
-	doTests(t, []test{
+	ftests.Run(t, []ftests.Test{
 		{
 			"bool × int × bool := bool×(int×bool)",
 			parse,
-			[]interface{}{strings.NewReader("λx : bool×int×bool . x y"), ""},
-			[]interface{}{
+			[]any{strings.NewReader("λx : bool×int×bool . x y"), ""},
+			[]any{
 				&AbsExpr{
 					expr{},
 					&ProductType{typ{}, &BoolType{}, &ProductType{
@@ -764,8 +765,8 @@ func TestProductType(t *testing.T) {
 		{
 			"(bool × int) × bool",
 			parse,
-			[]interface{}{strings.NewReader("λx : (bool×int)×bool . x y"), ""},
-			[]interface{}{
+			[]any{strings.NewReader("λx : (bool×int)×bool . x y"), ""},
+			[]any{
 				&AbsExpr{
 					expr{},
 					&ProductType{typ{}, &ProductType{

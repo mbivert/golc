@@ -138,7 +138,7 @@ func renameExpr(x Expr, b, a string) Expr {
 	switch x.(type) {
 
 	// NOTE: "cannot fallthrough in type switch"
-	case *UnitExpr
+	case *UnitExpr:
 		return x
 	case *IntExpr:
 		return x
@@ -151,7 +151,7 @@ func renameExpr(x Expr, b, a string) Expr {
 		x.(*UnaryExpr).right = renameExpr(x.(*UnaryExpr).right, b, a)
 		return x
 	case *BinaryExpr:
-		x.(*BinaryExpr).left  = renameExpr(x.(*BinaryExpr).left, b, a)
+		x.(*BinaryExpr).left = renameExpr(x.(*BinaryExpr).left, b, a)
 		x.(*BinaryExpr).right = renameExpr(x.(*BinaryExpr).right, b, a)
 		return x
 	}

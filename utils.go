@@ -132,7 +132,7 @@ func prettyPrint(x Expr) string {
 }
 
 func getFresh(m map[string]bool) string {
-	for n := 0;; n++ {
+	for n := 0; ; n++ {
 		s := fmt.Sprintf("x%d", n)
 		if _, ok := m[s]; !ok {
 			return s
