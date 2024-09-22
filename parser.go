@@ -228,7 +228,8 @@ func (p *parser) PrimitiveType() Type {
 
 // NOTE: in qlambdabook.pdf, <M1, M2, ... > := <M1, <M2, ...>>,
 // hence it's only natural for × to be right associative as well
-// (such a shortcut isn't articulated in the λ-calculus notes)
+// (I didn't saw such a shortcut being articulated in the λ-calculus
+// notes)
 func (p *parser) ProductType() Type {
 	l := p.PrimitiveType()
 

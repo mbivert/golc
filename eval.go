@@ -131,12 +131,42 @@ func evalBinaryExpr(x *BinaryExpr) (Expr, error) {
 	}
 }
 
+// α-renaming x{b,a}: renaming a as b in x.
+//
+// renaming is performed in-place (why not I guess?)
+func renameExpr(x Expr, b, a string) Expr {
+	switch x.(type) {
+
+	// NOTE: "cannot fallthrough in type switch"
+	case *UnitExpr
+		return x
+	case *IntExpr:
+		return x
+	case *FloatExpr:
+		return x
+	case *BoolExpr:
+		return x
+
+	case *UnaryExpr:
+		x.(*UnaryExpr).right = renameExpr(x.(*UnaryExpr).right, b, a)
+		return x
+	case *BinaryExpr:
+		x.(*BinaryExpr).left  = renameExpr(x.(*BinaryExpr).left, b, a)
+		x.(*BinaryExpr).right = renameExpr(x.(*BinaryExpr).right, b, a)
+		return x
+	}
+
+	return nil
+}
+
 // NOTE: we're returning an Expr here.
 // This is because I expect computation to stop on irreducible
 // lambda expressions at some point.
 func evalExpr(x Expr) (Expr, error) {
 	switch x.(type) {
 	// NOTE: "cannot fallthrough in type switch"
+	case *UnitExpr:
+		return x, nil
 	case *IntExpr:
 		return x, nil
 	case *FloatExpr:
