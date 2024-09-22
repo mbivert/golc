@@ -9,9 +9,11 @@ import (
 // True
 var T = &AbsExpr{
 	expr{},
+	&typ{},
 	"x",
 	&AbsExpr{
 		expr{},
+		&typ{},
 		"y",
 		&VarExpr{expr{}, "x"},
 	},
@@ -20,9 +22,11 @@ var T = &AbsExpr{
 // False
 var F = &AbsExpr{
 	expr{},
+	&typ{},
 	"x",
 	&AbsExpr{
 		expr{},
+		&typ{},
 		"y",
 		&VarExpr{expr{}, "y"},
 	},
@@ -30,9 +34,11 @@ var F = &AbsExpr{
 
 var and = &AbsExpr{
 	expr{},
+	&typ{},
 	"x",
 	&AbsExpr{
 		expr{},
+		&typ{},
 		"y",
 		&AppExpr{
 			expr{},
