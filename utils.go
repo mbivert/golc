@@ -5,6 +5,52 @@ import (
 	"strconv"
 )
 
+// True
+var T = &AbsExpr{
+	expr{},
+	&typ{},
+	"x",
+	&AbsExpr{
+		expr{},
+		&typ{},
+		"y",
+		&VarExpr{expr{}, "x"},
+	},
+}
+
+// False
+var F = &AbsExpr{
+	expr{},
+	&typ{},
+	"x",
+	&AbsExpr{
+		expr{},
+		&typ{},
+		"y",
+		&VarExpr{expr{}, "y"},
+	},
+}
+
+var and = &AbsExpr{
+	expr{},
+	&typ{},
+	"x",
+	&AbsExpr{
+		expr{},
+		&typ{},
+		"y",
+		&AppExpr{
+			expr{},
+			&AppExpr{
+				expr{},
+				&VarExpr{expr{}, "x"},
+				&VarExpr{expr{}, "y"},
+			},
+			F,
+		},
+	},
+}
+
 // Compute all free variables within a given expression
 // NOTE: this is more efficient than the previous version,
 // but perhaps the previous version would still be preferable,
@@ -56,6 +102,7 @@ func allVars(x Expr) map[string]bool {
 		case *VarExpr:
 			m[x.(*VarExpr).name] = true
 		case *AbsExpr:
+			m[x.(*AbsExpr).bound] = true
 			aux(x.(*AbsExpr).right, m)
 		case *AppExpr:
 			aux(x.(*AppExpr).left, m)

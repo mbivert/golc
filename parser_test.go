@@ -8,19 +8,6 @@ import (
 	"github.com/mbivert/ftests"
 )
 
-// True
-var T = &AbsExpr{
-	expr{},
-	&typ{},
-	"x",
-	&AbsExpr{
-		expr{},
-		&typ{},
-		"y",
-		&VarExpr{expr{}, "x"},
-	},
-}
-
 /*
  * Most of those tests are recycled from
  *	https://github.com/mbivert/nix-series-code/blob/master/lambda/parse_test.nix
@@ -37,7 +24,7 @@ var T = &AbsExpr{
  * Type indications, quantum and syntactical extensions will be tested
  * separately.
  */
-func TestTypelessParse(t *testing.T) {
+func TestParserTypeless(t *testing.T) {
 	ftests.Run(t, []ftests.Test{
 		{
 			"empty input",
@@ -507,7 +494,7 @@ func TestTypelessParse(t *testing.T) {
 	})
 }
 
-func TestPrimitiveType(t *testing.T) {
+func TestParserPrimitiveType(t *testing.T) {
 	ftests.Run(t, []ftests.Test{
 		{
 			"boolean",
@@ -583,7 +570,7 @@ func TestPrimitiveType(t *testing.T) {
 	})
 }
 
-func TestArrowType(t *testing.T) {
+func TestParserArrowType(t *testing.T) {
 	ftests.Run(t, []ftests.Test{
 		{
 			"bool → bool",
@@ -694,7 +681,7 @@ func TestArrowType(t *testing.T) {
 
 // same as TestArrowType(), but systematically using the short
 // form (x: $type . $expr instead of λx: $type . $expr
-func TestArrowTypeShort(t *testing.T) {
+func TestParserArrowTypeShort(t *testing.T) {
 	ftests.Run(t, []ftests.Test{
 		{
 			"bool → bool",
@@ -804,7 +791,7 @@ func TestArrowTypeShort(t *testing.T) {
 }
 
 // "we adopt the convention that × binds stronger than →"
-func TestArrowProductType(t *testing.T) {
+func TestParserArrowProductType(t *testing.T) {
 	ftests.Run(t, []ftests.Test{
 		{
 			"bool × int → bool := (bool×int) → bool",
@@ -851,7 +838,7 @@ func TestArrowProductType(t *testing.T) {
 
 // again, given what's in qlambdabook.pdf, we assume ×
 // to be right-associative.
-func TestProductType(t *testing.T) {
+func TestParserProductType(t *testing.T) {
 	ftests.Run(t, []ftests.Test{
 		{
 			"bool × int × bool := bool×(int×bool)",

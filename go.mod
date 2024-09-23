@@ -1,4 +1,4 @@
-module github.com/mbivert/goml
+module github.com/mbivert/golc
 
 go 1.22.5
 

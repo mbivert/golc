@@ -78,6 +78,12 @@ type FloatType struct {
 	typ
 }
 
+// type variable
+type VarType struct {
+	typ
+	name string
+}
+
 // NOTE: I'm not sure we can implement a recursive union type
 // easily with a generic: the compiler complains about recursivity,
 // and we need our sub-types depending on Expr (e.g. AbsExpr) to be

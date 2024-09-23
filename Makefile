@@ -1,25 +1,27 @@
 .PHONY: scanner-tests
 scanner-tests: tokenkind_string.go
 	@echo Runing scanner tests...
-	@go test -v scanner_test.go scanner.go tokenkind.go tokenkind_string.go
+	@go test -v -run TestScanner
 
 .PHONY: parser-tests
-parser-tests: tokenkind_string.go
+parser-tests:
 	@echo Running parser tests...
-	@go test -v parser_test.go parser.go scanner.go tokenkind.go tokenkind_string.go
+	@go test -v -run TestParser
 
 .PHONY: eval-tests
 eval-tests: tokenkind_string.go
 	@echo Running eval tests...
-	@go test -v eval_test.go eval.go parser.go scanner.go tokenkind.go tokenkind_string.go
+	@go test -v -run TestEval
 
 .PHONY: utils-tests
 utils-tests: tokenkind_string.go
 	@echo Running utils tests...
-	@go test -v utils_test.go utils.go parser.go scanner.go tokenkind.go tokenkind_string.go
+	@go test -v -run TestUtils
 
 .PHONY: tests
-tests: scanner-tests parser-tests eval-tests utils-tests
+tests:
+	@echo Running tests...
+	@go test -v .
 
 tokenkind_string.go: tokenkind.go
 	@echo Generating $@...

@@ -6,53 +6,7 @@ import (
 	"github.com/mbivert/ftests"
 )
 
-// True
-var T = &AbsExpr{
-	expr{},
-	&typ{},
-	"x",
-	&AbsExpr{
-		expr{},
-		&typ{},
-		"y",
-		&VarExpr{expr{}, "x"},
-	},
-}
-
-// False
-var F = &AbsExpr{
-	expr{},
-	&typ{},
-	"x",
-	&AbsExpr{
-		expr{},
-		&typ{},
-		"y",
-		&VarExpr{expr{}, "y"},
-	},
-}
-
-var and = &AbsExpr{
-	expr{},
-	&typ{},
-	"x",
-	&AbsExpr{
-		expr{},
-		&typ{},
-		"y",
-		&AppExpr{
-			expr{},
-			&AppExpr{
-				expr{},
-				&VarExpr{expr{}, "x"},
-				&VarExpr{expr{}, "y"},
-			},
-			F,
-		},
-	},
-}
-
-func TestFreeVars(t *testing.T) {
+func TestUtilsFreeVars(t *testing.T) {
 	ftests.Run(t, []ftests.Test{
 		{
 			"scalar expression: int",
@@ -104,7 +58,7 @@ func TestFreeVars(t *testing.T) {
 	})
 }
 
-func TestallVars(t *testing.T) {
+func TestUtilsAllVars(t *testing.T) {
 	ftests.Run(t, []ftests.Test{
 		{
 			"scalar expression: int",
@@ -159,7 +113,7 @@ func TestallVars(t *testing.T) {
 }
 
 // TODO: a bit light
-func TestPrettyPrint(t *testing.T) {
+func TestUtilsPrettyPrint(t *testing.T) {
 	ftests.Run(t, []ftests.Test{
 		{
 			"bare int",
@@ -218,7 +172,7 @@ func TestPrettyPrint(t *testing.T) {
 	})
 }
 
-func TestGetFresh(t *testing.T) {
+func TestUtilsGetFresh(t *testing.T) {
 	ftests.Run(t, []ftests.Test{
 		{
 			"empty map",

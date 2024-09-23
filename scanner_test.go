@@ -23,7 +23,7 @@ func (t token) MarshalJSON() ([]byte, error) {
 	})
 }
 
-func TestScanAll(t *testing.T) {
+func TestScannerScanAll(t *testing.T) {
 	ftests.Run(t, []ftests.Test{
 		{
 			"empty input",
