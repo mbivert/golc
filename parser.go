@@ -88,15 +88,23 @@ type VarType struct {
 // easily with a generic: the compiler complains about recursivity,
 // and we need our sub-types depending on Expr (e.g. AbsExpr) to be
 // parametrized as well. But, I haven't digged too deep either.
+//
+// NOTE: the dummy aExpr() feels now useless because of get/setType().
+//
+// NOTE: this feels clumsy anyway.
 type Expr interface {
 	aExpr()
+	getType() Type
+	setType(Type)
 }
 
 type expr struct {
 	typ Type
 }
 
-func (e *expr) aExpr() {}
+func (e *expr) aExpr()           {}
+func (e *expr) getType() Type    { return e.typ }
+func (e *expr) setType(typ Type) { e.typ = typ }
 
 type IntExpr struct {
 	expr

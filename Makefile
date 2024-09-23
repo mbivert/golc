@@ -4,7 +4,7 @@ scanner-tests: tokenkind_string.go
 	@go test -v -run TestScanner
 
 .PHONY: parser-tests
-parser-tests:
+parser-tests: tokenkind_string.go
 	@echo Running parser tests...
 	@go test -v -run TestParser
 
@@ -17,6 +17,11 @@ eval-tests: tokenkind_string.go
 utils-tests: tokenkind_string.go
 	@echo Running utils tests...
 	@go test -v -run TestUtils
+
+.PHONY: typing-tests
+typing-tests: tokenkind_string.go
+	@echo Running typing tests...
+	@go test -v -run TestTyping
 
 .PHONY: tests
 tests:
