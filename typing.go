@@ -44,6 +44,42 @@ func applySubst(t Type, σ Subst) Type {
 	return t
 }
 
+// τ ∘ ρ, at least for some substitutions
+func composeSubst(τ, ρ Subst) Subst {
+	σ := make(Subst)
+
+	// Import substitution from ρ to σ. In case
+	// of substitutions from ρ which will be altered
+	// by τ, import that of τ directly.
+	for n, t := range ρ {
+		σ[n] = t
+		if v, ok := t.(*VarType); ok {
+			if w, ok := τ[v.name]; ok {
+				σ[n] = w
+			}
+		}
+	}
+
+	for n, t := range τ {
+		_, ok := ρ[n]
+
+		// that substitution doesn't exist in ρ:
+		if !ok {
+			σ[n] = t
+			continue
+		}
+
+		// tricky case: this substitution exists
+		// in ρ and in τ.
+		//
+		// TODO/XXX: let's see how relevant that case
+		// practically is
+		panic("assert")
+	}
+
+	return σ
+}
+
 // returns true if n -- assumed to be a VarType's name --
 // occurs in t
 func occursIn(t Type, n string) bool {
@@ -145,7 +181,7 @@ func mgu1(a, b Type) (Subst, error) {
 		}
 	}
 
-	return nil, fmt.Errorf("Cannot unify %s with %s", a, b)
+	return nil, fmt.Errorf("Cannot unify '%s' with '%s'", a, b)
 }
 
 // Most General Unifier; we're closely following the algorithm
@@ -157,10 +193,9 @@ func mgu(as, bs []Type) (Subst, error) {
 		panic("assert")
 	}
 
-	switch len(as) {
-	case 0:
+	if len(as) == 0 {
 		return Subst{}, nil
-	case 1:
+	} else if len(as) == 1 {
 		return mgu1(as[0], bs[0])
 	}
 
@@ -173,15 +208,12 @@ func mgu(as, bs []Type) (Subst, error) {
 		applySubst(as[0], ρ),
 		applySubst(bs[0], ρ),
 	)
+
 	if err != nil {
 		return nil, err
 	}
 
-	// TODO: build τ ο ρ; it's likely that we can't just merge
-	// τ into ρ
-	τ = τ
-
-	return nil, nil
+	return composeSubst(τ, ρ), nil
 }
 
 func inferType(x, y Expr) (Subst, error) {

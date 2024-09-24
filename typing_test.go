@@ -288,7 +288,8 @@ func TestTypingOccursIn(t *testing.T) {
 	})
 }
 
-func TestTypingMgu(t *testing.T) {
+// testing mgu1(), but via mgu()
+func TestTypingMgu1(t *testing.T) {
 	var nilSubst Subst
 
 	ftests.Run(t, []ftests.Test{
@@ -494,6 +495,90 @@ func TestTypingMgu(t *testing.T) {
 			[]any{[]Type{&FloatType{typ{}}}, []Type{&FloatType{typ{}}}},
 			[]any{Subst{}, nil},
 		},
-		// TODO: test failures as well.
+		{
+			"case 9: mgu(*; *) = id (ι)",
+			mgu,
+			[]any{[]Type{&UnitType{typ{}}}, []Type{&UnitType{typ{}}}},
+			[]any{Subst{}, nil},
+		},
+	})
+}
+
+// TODO: incomplete
+func TestTypingMguFails(t *testing.T) {
+	var nilSubst Subst
+
+	ftests.Run(t, []ftests.Test{
+		{
+			"case 10: mgu(ι, A→B)",
+			mgu,
+			[]any{
+				[]Type{&BoolType{typ{}}},
+				[]Type{&ArrowType{typ{},
+					&VarType{typ{}, "A"},
+					&VarType{typ{}, "B"},
+				}},
+			},
+			[]any{nilSubst, fmt.Errorf("Cannot unify 'bool' with 'A → B'")},
+		},
+	})
+}
+
+func TestTypingMgu(t *testing.T) {
+//	var nilSubst Subst
+
+	ftests.Run(t, []ftests.Test{
+		{
+			"case 7: mgu(bool → B, A → B)",
+			mgu,
+			[]any{
+				[]Type{&ArrowType{typ{},
+					&BoolType{typ{}},
+					&VarType{typ{}, "B"},
+				}},
+				[]Type{&ArrowType{typ{},
+					&VarType{typ{}, "A"},
+					&VarType{typ{}, "B"},
+				}},
+			},
+			[]any{Subst{"A" : &BoolType{typ{}}}, nil},
+		},
+		// p84 example
+		// TODO: we need to refine our composition operation:
+		// the composition need to act on the types to be
+		// introduced by the previous substitution.
+		{
+			"case 7: mgu(X → (X → Y), (Y → Z) → W)",
+			mgu,
+			[]any{
+				[]Type{&ArrowType{typ{},
+					&VarType{typ{}, "X"},
+					&ArrowType{typ{},
+						&VarType{typ{}, "X"},
+						&VarType{typ{}, "Y"},
+					},
+				}},
+				[]Type{&ArrowType{typ{},
+					&ArrowType{typ{},
+						&VarType{typ{}, "Y"},
+						&VarType{typ{}, "Z"},
+					},
+					&VarType{typ{}, "W"},
+				}},
+			},
+			[]any{Subst{
+				"X" : &ArrowType{typ{},
+					&VarType{typ{}, "Y"},
+					&VarType{typ{}, "Z"},
+				},
+				"W" : &ArrowType{typ{},
+					&ArrowType{typ{},
+						&VarType{typ{}, "Y"},
+						&VarType{typ{}, "Z"},
+					},
+					&VarType{typ{}, "Y"},
+				},
+			}, nil},
+		},
 	})
 }
