@@ -82,84 +82,66 @@ func mguVarType(t Type, n string) (Subst, error) {
 	}
 }
 
+// space shuttle style / DO NOT ATTEMPT TO SIMPLIFY THIS CODE
 func mgu1(a, b Type) (Subst, error) {
-	switch a.(type) {
-	case *VarType:
-		n := a.(*VarType).name
-		switch b.(type) {
-		case *VarType:
-			if n == b.(*VarType).name {
+	if av, ok := a.(*VarType); ok {
+		if bv, ok := b.(*VarType); ok {
+			if av.name == bv.name {
 				// case 1.
 				// no entry: id() assumed
 				return Subst{}, nil
 			}
-		default:
+		} else {
 			// case 2 / 3
-			return mguVarType(b, n)
+			return mguVarType(b, av.name)
 		}
 	}
 
-	switch b.(type) {
-	case *VarType:
+	if bv, ok := b.(*VarType); ok {
 		// case 4 / 5
-		return mguVarType(a, b.(*VarType).name)
+		return mguVarType(a, bv.name)
 	}
 
-	// case 6
-	switch a.(type) {
-	case *BoolType:
-		switch b.(type) {
-		case *BoolType:
-			return Subst{}, nil
-		}
-	case *IntType:
-		switch b.(type) {
-		case *IntType:
-			return Subst{}, nil
-		}
-	case *FloatType:
-		switch b.(type) {
-		case *FloatType:
+	// case 6 (maybe)
+	if _, ok := a.(*BoolType); ok {
+		if _, ok := b.(*BoolType); ok {
 			return Subst{}, nil
 		}
 	}
+	if _, ok := a.(*IntType); ok {
+		if _, ok := b.(*IntType); ok {
+			return Subst{}, nil
+		}
+	}
+	if _, ok := a.(*FloatType); ok {
+		if _, ok := b.(*FloatType); ok {
+			return Subst{}, nil
+		}
+	}
 
-	switch a.(type) {
-	case *ArrowType:
-		switch b.(type) {
-		case *ArrowType:
+
+	if av, ok := a.(*ArrowType); ok {
+		if bv, ok := b.(*ArrowType); ok {
+			// case 7
 			return mgu(
-				[]Type{
-					a.(*ArrowType).left,
-					a.(*ArrowType).right,
-				},
-				[]Type{
-					b.(*ArrowType).left,
-					b.(*ArrowType).right,
-				},
+				[]Type{av.left, av.right},
+				[]Type{bv.left, bv.right},
 			)
 		}
-	case *ProductType:
-		switch b.(type) {
-		case *ProductType:
+	}
+	if av, ok := a.(*ProductType); ok {
+		if bv, ok := b.(*ProductType); ok {
+			// case 8
 			return mgu(
-				[]Type{
-					a.(*ProductType).left,
-					a.(*ProductType).right,
-				},
-				[]Type{
-					b.(*ProductType).left,
-					b.(*ProductType).right,
-				},
+				[]Type{av.left, av.right},
+				[]Type{bv.left, bv.right},
 			)
 		}
 	}
 
 	// case 9
-	switch a.(type) {
-	case *UnitType:
-		switch b.(type) {
-		case *UnitType:
+	if _, ok := a.(*UnitType); ok {
+		if _, ok := b.(*UnitType); ok {
 			return Subst{}, nil
 		}
 	}
@@ -168,8 +150,9 @@ func mgu1(a, b Type) (Subst, error) {
 }
 
 // Most General Unifier; we're closely following the algorithm
-// description, being verbose on purpose/to reflect it ("space
-// shuttle style" / "DO NOT ATTEMPT TO SIMPLIFY THIS CODE")
+// description, being verbose on purpose/to reflect it.
+//
+// space shuttle style / DO NOT ATTEMPT TO SIMPLIFY THIS CODE
 func mgu(as, bs []Type) (Subst, error) {
 	if len(as) != len(bs) {
 		panic("assert")
