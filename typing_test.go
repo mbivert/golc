@@ -6,7 +6,7 @@ import (
 	"github.com/mbivert/ftests"
 )
 
-func TestTypingapplySubst(t *testing.T) {
+func TestTypingApplySubst(t *testing.T) {
 	ftests.Run(t, []ftests.Test{
 		{
 			"VarType, empty substitution (id)",
@@ -176,6 +176,113 @@ func TestTypingapplySubst(t *testing.T) {
 			[]any{
 				&FloatType{typ{}},
 			},
+		},
+	})
+}
+
+func TestTypingOccursIn(t *testing.T) {
+	ftests.Run(t, []ftests.Test{
+		{
+			"VarType, no match",
+			occursIn,
+			[]any{
+				&VarType{typ{}, "A"},
+				"B",
+			},
+			[]any{false},
+		},
+		{
+			"VarType, match",
+			occursIn,
+			[]any{
+				&VarType{typ{}, "A"},
+				"A",
+			},
+			[]any{true},
+		},
+		{
+			"ArrowType, match",
+			occursIn,
+			[]any{
+				&ArrowType{typ{},
+					&VarType{typ{}, "A"},
+					&VarType{typ{}, "B"},
+				},
+				"A",
+			},
+			[]any{true},
+		},
+		{
+			"ArrowType, no match",
+			occursIn,
+			[]any{
+				&ArrowType{typ{},
+					&VarType{typ{}, "A"},
+					&VarType{typ{}, "B"},
+				},
+				"C",
+			},
+			[]any{false},
+		},
+		{
+			"ProductType, match",
+			occursIn,
+			[]any{
+				&ProductType{typ{},
+					&VarType{typ{}, "A"},
+					&VarType{typ{}, "B"},
+				},
+				"A",
+			},
+			[]any{true},
+		},
+		{
+			"ProductType, no match",
+			occursIn,
+			[]any{
+				&ProductType{typ{},
+					&VarType{typ{}, "A"},
+					&VarType{typ{}, "B"},
+				},
+				"C",
+			},
+			[]any{false},
+		},
+		{
+			"UnitType: never matched",
+			occursIn,
+			[]any{
+				&UnitType{typ{}},
+				"A",
+			},
+			[]any{false},
+		},
+		{
+			"BoolType: never matched",
+			occursIn,
+			[]any{
+				&BoolType{typ{}},
+				"A",
+			},
+			[]any{false},
+		},
+		{
+			"IntType: never matched",
+			occursIn,
+			[]any{
+				&IntType{typ{}},
+				"A",
+			},
+			[]any{false},
+		},
+		{
+			"FloatType: never matched",
+			occursIn,
+			[]any{
+				&FloatType{typ{}},
+				"A",
+			},
+			[]any{false},
 		},
 	})
 }

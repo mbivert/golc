@@ -16,16 +16,18 @@ func applySubst(t Type, σ Subst) Type {
 		}
 
 	case *ArrowType:
-		l := applySubst(t.(*ArrowType).left, σ)
-		r := applySubst(t.(*ArrowType).right, σ)
-
-		return &ArrowType{typ{}, l, r}
+		return &ArrowType{
+			typ{},
+			applySubst(t.(*ArrowType).left, σ),
+			applySubst(t.(*ArrowType).right, σ),
+		}
 
 	case *ProductType:
-		l := applySubst(t.(*ProductType).left, σ)
-		r := applySubst(t.(*ProductType).right, σ)
-
-		return &ProductType{typ{}, l, r}
+		return &ProductType{
+			typ{},
+			applySubst(t.(*ProductType).left, σ),
+			applySubst(t.(*ProductType).right, σ),
+		}
 
 	// "iotas" (unit / primitive types)
 	case *UnitType:
@@ -40,9 +42,65 @@ func applySubst(t Type, σ Subst) Type {
 	return t
 }
 
+// returns true if n -- assumed to be a VarType's name --
+// occurs in t
+func occursIn(t Type, n string) bool {
+	switch t.(type) {
+	case *VarType:
+		return t.(*VarType).name == n
+
+	case *ArrowType:
+		return occursIn(t.(*ArrowType).left, n) ||
+			occursIn(t.(*ArrowType).right, n)
+
+	case *ProductType:
+		return occursIn(t.(*ProductType).left, n) ||
+			occursIn(t.(*ProductType).right, n)
+
+	// "iotas" (unit / primitive types)
+	case *UnitType:
+	case *BoolType:
+	case *IntType:
+	case *FloatType:
+
+	default:
+		panic("X_x")
+	}
+
+	return false
+}
+
 // most general unifier
-func mgu() Subst {
-	return nil
+func mgu(as, bs []Type) (Subst, error) {
+	if len(as) != len(bs) {
+		panic("assert")
+	}
+
+	if len(as) == 1 {
+		a, b := as[0], bs[0]
+
+		switch a.(type) {
+		case *VarType:
+			switch b.(type) {
+			case *VarType:
+				if a.(*VarType).name == b.(*VarType).name {
+					// no entry: id() assumed
+					return Subst{}, nil
+				}
+			default:
+			}
+		case *ArrowType:
+		case *ProductType:
+		case *UnitType:
+		case *BoolType:
+		case *IntType:
+		case *FloatType:
+		default:
+			panic("O_O")
+		}
+	}
+
+	return nil, nil
 }
 
 func inferType(x, y Expr) (Subst, error) {
