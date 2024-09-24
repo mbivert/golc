@@ -78,19 +78,22 @@ func mguVarType(t Type, n string) (Subst, error) {
 		return Subst{n: t}, nil
 	} else {
 		// case 3 / 5
-		return nil, fmt.Errorf(
-			"%s (VarType) occurs in %s",
-			n, t,
-		)
+		return nil, fmt.Errorf("%s occurs in %s", n, t)
 	}
 }
 
-// most general unifier; we're following the algorithm description
-// quite closely, and being verbose on purpose/to reflect it ("space
+// Most General Unifier; we're closely following the algorithm
+// description, being verbose on purpose/to reflect it ("space
 // shuttle style" / "DO NOT ATTEMPT TO SIMPLIFY THIS CODE")
 func mgu(as, bs []Type) (Subst, error) {
 	if len(as) != len(bs) {
 		panic("assert")
+	}
+
+	// TODO: may become useless once the end of mgu()
+	// is properly wired.
+	if len(as) == 0 {
+		return Subst{}, nil
 	}
 
 	if len(as) == 1 {
@@ -146,7 +149,7 @@ func mgu(as, bs []Type) (Subst, error) {
 						a.(*ArrowType).left,
 						a.(*ArrowType).right,
 					},
-					[]Type {
+					[]Type{
 						b.(*ArrowType).left,
 						b.(*ArrowType).right,
 					},
@@ -160,7 +163,7 @@ func mgu(as, bs []Type) (Subst, error) {
 						a.(*ProductType).left,
 						a.(*ProductType).right,
 					},
-					[]Type {
+					[]Type{
 						b.(*ProductType).left,
 						b.(*ProductType).right,
 					},

@@ -46,11 +46,16 @@ var opPrecs = map[tokenKind]int{
 // efficient way to encode all that.
 type Type interface {
 	aType()
+	// NOTE/TODO: the string representation of types
+	// is indirectly tested in typing_test.go and might
+	// need adjustments / dedicated tests.
+	String() string
 }
 
 type typ struct{}
 
 func (t *typ) aType() {}
+func (t *typ) String() string { return "" }
 
 type ArrowType struct {
 	typ
@@ -76,6 +81,50 @@ type IntType struct {
 
 type FloatType struct {
 	typ
+}
+
+func (t *VarType) String() string {
+	return t.name
+}
+
+func (t *ArrowType) String() string {
+	return fmt.Sprintf("%s → %s", t.left, t.right)
+}
+
+func (t *ProductType) String() string {
+	var l, r string
+
+	switch t.left.(type) {
+	case *ArrowType:
+		l = fmt.Sprintf("(%s)", t.left)
+	default:
+		l = fmt.Sprintf("%s", t.left)
+	}
+
+	switch t.right.(type) {
+	case *ArrowType:
+		r = fmt.Sprintf("(%s)", t.right)
+	default:
+		r = fmt.Sprintf("%s", t.right)
+	}
+
+	return fmt.Sprintf("%s × %s", l, r)
+}
+
+func (t *UnitType) String() string {
+	return "*"
+}
+
+func (t *BoolType) String() string {
+	return "bool"
+}
+
+func (t *IntType) String() string {
+	return "int"
+}
+
+func (t *FloatType) String() string {
+	return "float"
 }
 
 // type variable

@@ -1,6 +1,7 @@
 package main
 
 import (
+	"fmt"
 	"testing"
 
 	"github.com/mbivert/ftests"
@@ -288,6 +289,106 @@ func TestTypingOccursIn(t *testing.T) {
 }
 
 func TestTypingMgu(t *testing.T) {
+	var nilSubst Subst
+
 	ftests.Run(t, []ftests.Test{
+		{
+			"Empty input",
+			mgu,
+			[]any{[]Type{}, []Type{}},
+			[]any{Subst{}, nil},
+		},
+		{
+			"case 1: mgu(X; X) = id",
+			mgu,
+			[]any{[]Type{&VarType{typ{}, "X"}}, []Type{&VarType{typ{}, "X"}}},
+			[]any{Subst{}, nil},
+		},
+		{
+			"case 2: mgu(X; B) = [X ↦ B] if X ∉ B (B is →)",
+			mgu,
+			[]any{
+				[]Type{&VarType{typ{}, "X"}},
+				[]Type{
+					&ArrowType{typ{},
+						&VarType{typ{}, "Y"},
+						&VarType{typ{}, "Z"},
+					},
+				},
+			},
+			[]any{Subst{
+				"X": &ArrowType{typ{},
+					&VarType{typ{}, "Y"},
+					&VarType{typ{}, "Z"},
+				},
+			}, nil},
+		},
+		{
+			"case 2: mgu(X; B) = [X ↦ B] if X ∉ B (B is ×, contains →)",
+			mgu,
+			[]any{
+				[]Type{&VarType{typ{}, "X"}},
+				[]Type{
+					&ProductType{typ{},
+						&VarType{typ{}, "Y"},
+						&ArrowType{typ{},
+							&VarType{typ{}, "Z"},
+							&VarType{typ{}, "Z"},
+						},
+					},
+				},
+			},
+			[]any{Subst{
+				"X": &ProductType{typ{},
+					&VarType{typ{}, "Y"},
+					&ArrowType{typ{},
+						&VarType{typ{}, "Z"},
+						&VarType{typ{}, "Z"},
+					},
+				},
+			}, nil},
+		},
+		{
+			"case 2: mgu(X; B) = [X ↦ B] if X ∉ B (B is ι)",
+			mgu,
+			[]any{
+				[]Type{&VarType{typ{}, "X"}},
+				[]Type{&BoolType{typ{}}},
+			},
+			[]any{Subst{
+				"X": &BoolType{typ{}},
+			}, nil},
+		},
+		{
+			"case 3: mgu(X; B) fails if X ∈ B (B is →)",
+			mgu,
+			[]any{
+				[]Type{&VarType{typ{}, "X"}},
+				[]Type{
+					&ArrowType{typ{},
+						&VarType{typ{}, "Y"},
+						&VarType{typ{}, "X"},
+					},
+				},
+			},
+			[]any{nilSubst, fmt.Errorf("X occurs in Y → X")},
+		},
+		{
+			"case 3: mgu(X; B) fails if X ∈ B (B is ×, contains →)",
+			mgu,
+			[]any{
+				[]Type{&VarType{typ{}, "X"}},
+				[]Type{
+					&ProductType{typ{},
+						&VarType{typ{}, "Y"},
+						&ArrowType{typ{},
+							&VarType{typ{}, "Z"},
+							&VarType{typ{}, "X"},
+						},
+					},
+				},
+			},
+			[]any{nilSubst, fmt.Errorf("X occurs in Y × (Z → X)")},
+		},
 	})
 }
