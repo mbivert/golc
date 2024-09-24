@@ -54,7 +54,7 @@ type Type interface {
 
 type typ struct{}
 
-func (t *typ) aType() {}
+func (t *typ) aType()         {}
 func (t *typ) String() string { return "" }
 
 type ArrowType struct {

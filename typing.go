@@ -82,6 +82,91 @@ func mguVarType(t Type, n string) (Subst, error) {
 	}
 }
 
+func mgu1(a, b Type) (Subst, error) {
+	switch a.(type) {
+	case *VarType:
+		n := a.(*VarType).name
+		switch b.(type) {
+		case *VarType:
+			if n == b.(*VarType).name {
+				// case 1.
+				// no entry: id() assumed
+				return Subst{}, nil
+			}
+		default:
+			// case 2 / 3
+			return mguVarType(b, n)
+		}
+	}
+
+	switch b.(type) {
+	case *VarType:
+		// case 4 / 5
+		return mguVarType(a, b.(*VarType).name)
+	}
+
+	// case 6
+	switch a.(type) {
+	case *BoolType:
+		switch b.(type) {
+		case *BoolType:
+			return Subst{}, nil
+		}
+	case *IntType:
+		switch b.(type) {
+		case *IntType:
+			return Subst{}, nil
+		}
+	case *FloatType:
+		switch b.(type) {
+		case *FloatType:
+			return Subst{}, nil
+		}
+	}
+
+	switch a.(type) {
+	case *ArrowType:
+		switch b.(type) {
+		case *ArrowType:
+			return mgu(
+				[]Type{
+					a.(*ArrowType).left,
+					a.(*ArrowType).right,
+				},
+				[]Type{
+					b.(*ArrowType).left,
+					b.(*ArrowType).right,
+				},
+			)
+		}
+	case *ProductType:
+		switch b.(type) {
+		case *ProductType:
+			return mgu(
+				[]Type{
+					a.(*ProductType).left,
+					a.(*ProductType).right,
+				},
+				[]Type{
+					b.(*ProductType).left,
+					b.(*ProductType).right,
+				},
+			)
+		}
+	}
+
+	// case 9
+	switch a.(type) {
+	case *UnitType:
+		switch b.(type) {
+		case *UnitType:
+			return Subst{}, nil
+		}
+	}
+
+	return nil, fmt.Errorf("Cannot unify %s with %s", a, b)
+}
+
 // Most General Unifier; we're closely following the algorithm
 // description, being verbose on purpose/to reflect it ("space
 // shuttle style" / "DO NOT ATTEMPT TO SIMPLIFY THIS CODE")
@@ -90,97 +175,11 @@ func mgu(as, bs []Type) (Subst, error) {
 		panic("assert")
 	}
 
-	// TODO: may become useless once the end of mgu()
-	// is properly wired.
-	if len(as) == 0 {
+	switch len(as) {
+	case 0:
 		return Subst{}, nil
-	}
-
-	if len(as) == 1 {
-		a, b := as[0], bs[0]
-
-		switch a.(type) {
-		case *VarType:
-			n := a.(*VarType).name
-			switch b.(type) {
-			case *VarType:
-				if n == b.(*VarType).name {
-					// case 1.
-					// no entry: id() assumed
-					return Subst{}, nil
-				}
-			default:
-				// case 2 / 3
-				return mguVarType(b, n)
-			}
-		}
-
-		switch b.(type) {
-		case *VarType:
-			// case 4 / 5
-			return mguVarType(a, b.(*VarType).name)
-		}
-
-		// case 6
-		switch a.(type) {
-		case *BoolType:
-			switch b.(type) {
-			case *BoolType:
-				return Subst{}, nil
-			}
-		case *IntType:
-			switch b.(type) {
-			case *IntType:
-				return Subst{}, nil
-			}
-		case *FloatType:
-			switch b.(type) {
-			case *FloatType:
-				return Subst{}, nil
-			}
-		}
-
-		switch a.(type) {
-		case *ArrowType:
-			switch b.(type) {
-			case *ArrowType:
-				return mgu(
-					[]Type{
-						a.(*ArrowType).left,
-						a.(*ArrowType).right,
-					},
-					[]Type{
-						b.(*ArrowType).left,
-						b.(*ArrowType).right,
-					},
-				)
-			}
-		case *ProductType:
-			switch b.(type) {
-			case *ProductType:
-				return mgu(
-					[]Type{
-						a.(*ProductType).left,
-						a.(*ProductType).right,
-					},
-					[]Type{
-						b.(*ProductType).left,
-						b.(*ProductType).right,
-					},
-				)
-			}
-		}
-
-		// case 9
-		switch a.(type) {
-		case *UnitType:
-			switch b.(type) {
-			case *UnitType:
-				return Subst{}, nil
-			}
-		}
-
-		return nil, fmt.Errorf("Cannot unify %s with %s", a, b)
+	case 1:
+		return mgu1(as[0], bs[0])
 	}
 
 	ρ, err := mgu(as[1:], bs[1:])
@@ -188,9 +187,9 @@ func mgu(as, bs []Type) (Subst, error) {
 		return nil, err
 	}
 
-	τ, err := mgu(
-		[]Type{applySubst(as[0], ρ)},
-		[]Type{applySubst(bs[0], ρ)},
+	τ, err := mgu1(
+		applySubst(as[0], ρ),
+		applySubst(bs[0], ρ),
 	)
 	if err != nil {
 		return nil, err
