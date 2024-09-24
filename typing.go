@@ -119,7 +119,6 @@ func mgu1(a, b Type) (Subst, error) {
 		}
 	}
 
-
 	if av, ok := a.(*ArrowType); ok {
 		if bv, ok := b.(*ArrowType); ok {
 			// case 7

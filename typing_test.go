@@ -390,5 +390,110 @@ func TestTypingMgu(t *testing.T) {
 			},
 			[]any{nilSubst, fmt.Errorf("X occurs in Y × (Z → X)")},
 		},
+		{
+			"case 4: mgu(A, Y) = [Y ↦ A] if Y ∉ A (A is →)",
+			mgu,
+			[]any{
+				[]Type{
+					&ArrowType{typ{},
+						&VarType{typ{}, "Y"},
+						&VarType{typ{}, "Z"},
+					},
+				},
+				[]Type{&VarType{typ{}, "A"}},
+			},
+			[]any{Subst{
+				"A": &ArrowType{typ{},
+					&VarType{typ{}, "Y"},
+					&VarType{typ{}, "Z"},
+				},
+			}, nil},
+		},
+		{
+			"case 4: mgu(A; Y) = [Y ↦ A] if Y ∉ A (A is ×, contains →)",
+			mgu,
+			[]any{
+				[]Type{
+					&ProductType{typ{},
+						&VarType{typ{}, "Y"},
+						&ArrowType{typ{},
+							&VarType{typ{}, "Z"},
+							&VarType{typ{}, "Z"},
+						},
+					},
+				},
+				[]Type{&VarType{typ{}, "A"}},
+			},
+			[]any{Subst{
+				"A": &ProductType{typ{},
+					&VarType{typ{}, "Y"},
+					&ArrowType{typ{},
+						&VarType{typ{}, "Z"},
+						&VarType{typ{}, "Z"},
+					},
+				},
+			}, nil},
+		},
+		{
+			"case 4: mgu(A; Y) = [Y ↦ A] if Y ∉ A (A is ι)",
+			mgu,
+			[]any{
+				[]Type{&BoolType{typ{}}},
+				[]Type{&VarType{typ{}, "A"}},
+			},
+			[]any{Subst{
+				"A": &BoolType{typ{}},
+			}, nil},
+		},
+		{
+			"case 5: mgu(A; Y) fails if Y ∈ A (A is →)",
+			mgu,
+			[]any{
+				[]Type{
+					&ArrowType{typ{},
+						&VarType{typ{}, "Y"},
+						&VarType{typ{}, "X"},
+					},
+				},
+				[]Type{&VarType{typ{}, "Y"}},
+			},
+			[]any{nilSubst, fmt.Errorf("Y occurs in Y → X")},
+		},
+		{
+			"case 5: mgu(A; Y) fails if Y ∈ A (A is ×, contains →)",
+			mgu,
+			[]any{
+				[]Type{
+					&ProductType{typ{},
+						&VarType{typ{}, "Y"},
+						&ArrowType{typ{},
+							&VarType{typ{}, "Z"},
+							&VarType{typ{}, "X"},
+						},
+					},
+				},
+				[]Type{&VarType{typ{}, "Y"}},
+			},
+			[]any{nilSubst, fmt.Errorf("Y occurs in Y × (Z → X)")},
+		},
+		{
+			"case 6: mgu(bool; bool) = id (ι)",
+			mgu,
+			[]any{[]Type{&BoolType{typ{}}}, []Type{&BoolType{typ{}}}},
+			[]any{Subst{}, nil},
+		},
+		{
+			"case 6: mgu(int; int) = id (ι)",
+			mgu,
+			[]any{[]Type{&IntType{typ{}}}, []Type{&IntType{typ{}}}},
+			[]any{Subst{}, nil},
+		},
+		{
+			"case 6: mgu(float; float) = id (ι)",
+			mgu,
+			[]any{[]Type{&FloatType{typ{}}}, []Type{&FloatType{typ{}}}},
+			[]any{Subst{}, nil},
+		},
+		// TODO: test failures as well.
 	})
 }
