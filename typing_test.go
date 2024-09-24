@@ -286,3 +286,8 @@ func TestTypingOccursIn(t *testing.T) {
 		},
 	})
 }
+
+func TestTypingMgu(t *testing.T) {
+	ftests.Run(t, []ftests.Test{
+	})
+}

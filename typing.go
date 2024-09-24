@@ -1,5 +1,7 @@
 package main
 
+import "fmt"
+
 type Subst map[string]Type
 
 // NOTE/TODO: for now, applySubst operates on types, but we may
@@ -70,7 +72,22 @@ func occursIn(t Type, n string) bool {
 	return false
 }
 
-// most general unifier
+func mguVarType(t Type, n string) (Subst, error) {
+	if !occursIn(t, n) {
+		// case 2 / 4
+		return Subst{n: t}, nil
+	} else {
+		// case 3 / 5
+		return nil, fmt.Errorf(
+			"%s (VarType) occurs in %s",
+			n, t,
+		)
+	}
+}
+
+// most general unifier; we're following the algorithm description
+// quite closely, and being verbose on purpose/to reflect it ("space
+// shuttle style" / "DO NOT ATTEMPT TO SIMPLIFY THIS CODE")
 func mgu(as, bs []Type) (Subst, error) {
 	if len(as) != len(bs) {
 		panic("assert")
@@ -81,24 +98,104 @@ func mgu(as, bs []Type) (Subst, error) {
 
 		switch a.(type) {
 		case *VarType:
+			n := a.(*VarType).name
 			switch b.(type) {
 			case *VarType:
-				if a.(*VarType).name == b.(*VarType).name {
+				if n == b.(*VarType).name {
+					// case 1.
 					// no entry: id() assumed
 					return Subst{}, nil
 				}
 			default:
+				// case 2 / 3
+				return mguVarType(b, n)
 			}
-		case *ArrowType:
-		case *ProductType:
-		case *UnitType:
-		case *BoolType:
-		case *IntType:
-		case *FloatType:
-		default:
-			panic("O_O")
 		}
+
+		switch b.(type) {
+		case *VarType:
+			// case 4 / 5
+			return mguVarType(a, b.(*VarType).name)
+		}
+
+		// case 6
+		switch a.(type) {
+		case *BoolType:
+			switch b.(type) {
+			case *BoolType:
+				return Subst{}, nil
+			}
+		case *IntType:
+			switch b.(type) {
+			case *IntType:
+				return Subst{}, nil
+			}
+		case *FloatType:
+			switch b.(type) {
+			case *FloatType:
+				return Subst{}, nil
+			}
+		}
+
+		switch a.(type) {
+		case *ArrowType:
+			switch b.(type) {
+			case *ArrowType:
+				return mgu(
+					[]Type{
+						a.(*ArrowType).left,
+						a.(*ArrowType).right,
+					},
+					[]Type {
+						b.(*ArrowType).left,
+						b.(*ArrowType).right,
+					},
+				)
+			}
+		case *ProductType:
+			switch b.(type) {
+			case *ProductType:
+				return mgu(
+					[]Type{
+						a.(*ProductType).left,
+						a.(*ProductType).right,
+					},
+					[]Type {
+						b.(*ProductType).left,
+						b.(*ProductType).right,
+					},
+				)
+			}
+		}
+
+		// case 9
+		switch a.(type) {
+		case *UnitType:
+			switch b.(type) {
+			case *UnitType:
+				return Subst{}, nil
+			}
+		}
+
+		return nil, fmt.Errorf("Cannot unify %s with %s", a, b)
 	}
+
+	ρ, err := mgu(as[1:], bs[1:])
+	if err != nil {
+		return nil, err
+	}
+
+	τ, err := mgu(
+		[]Type{applySubst(as[0], ρ)},
+		[]Type{applySubst(bs[0], ρ)},
+	)
+	if err != nil {
+		return nil, err
+	}
+
+	// TODO: build τ ο ρ; it's likely that we can't just merge
+	// τ into ρ
+	τ = τ
 
 	return nil, nil
 }
