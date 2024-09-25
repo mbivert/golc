@@ -35,4 +35,18 @@ https://github.com/rui314/chibicc
 https://compilerbook.com/
 https://interpreterbook.com/
 
+https://github.com/jozefg/pcf/blob/master/explanation.md
+https://jozefg.bitbucket.io/posts/2014-12-17-variables.html
+	https://hackage.haskell.org/package/bound
+
+https://github.com/jozefg/pcf/blob/master/src/Language/Pcf.hs
+
+https://web.archive.org/web/20071213234103/http://www.cs.pomona.edu/classes/cs131/Parsers/parsePCF.sml
+
+https://okmij.org/ftp/ML/generalization.html
+
+https://caml.inria.fr/pub/docs/u3-ocaml/ocaml-ml.html
+
+https://github.com/ocaml/ocaml/blob/trunk/typing/HACKING.adoc
+
 -->

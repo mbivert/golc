@@ -56,7 +56,24 @@ func composeSubst(τ, ρ Subst) Subst {
 		if v, ok := t.(*VarType); ok {
 			if w, ok := τ[v.name]; ok {
 				σ[n] = w
+				continue
 			}
+		}
+
+		// We need to apply τ to the types involved
+		// in ρ to perform the composition
+		if v, ok := t.(*ArrowType); ok {
+			σ[n] = &ArrowType{typ{},
+				applySubst(v.left, τ),
+				applySubst(v.right, τ),
+			}
+		} else if v, ok := t.(*ProductType); ok {
+			σ[n] = &ProductType{typ{},
+				applySubst(v.left, τ),
+				applySubst(v.right, τ),
+			}
+		} else {
+			σ[n] = t
 		}
 	}
 
@@ -73,7 +90,8 @@ func composeSubst(τ, ρ Subst) Subst {
 		// in ρ and in τ.
 		//
 		// TODO/XXX: let's see how relevant that case
-		// practically is
+		// practically is; I fear we'll have to rename/introduce
+		// dummy "free" type names
 		panic("assert")
 	}
 

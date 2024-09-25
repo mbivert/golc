@@ -543,12 +543,8 @@ func TestTypingMgu(t *testing.T) {
 			},
 			[]any{Subst{"A" : &BoolType{typ{}}}, nil},
 		},
-		// p84 example
-		// TODO: we need to refine our composition operation:
-		// the composition need to act on the types to be
-		// introduced by the previous substitution.
 		{
-			"case 7: mgu(X → (X → Y), (Y → Z) → W)",
+			"case 7: mgu(X → (X → Y), (Y → Z) → W) (p84)",
 			mgu,
 			[]any{
 				[]Type{&ArrowType{typ{},
@@ -572,6 +568,39 @@ func TestTypingMgu(t *testing.T) {
 					&VarType{typ{}, "Z"},
 				},
 				"W" : &ArrowType{typ{},
+					&ArrowType{typ{},
+						&VarType{typ{}, "Y"},
+						&VarType{typ{}, "Z"},
+					},
+					&VarType{typ{}, "Y"},
+				},
+			}, nil},
+		},
+		{
+			"case 7: mgu(X × (X × Y), (Y → Z) × W) (p84 tweaked)",
+			mgu,
+			[]any{
+				[]Type{&ProductType{typ{},
+					&VarType{typ{}, "X"},
+					&ProductType{typ{},
+						&VarType{typ{}, "X"},
+						&VarType{typ{}, "Y"},
+					},
+				}},
+				[]Type{&ProductType{typ{},
+					&ArrowType{typ{},
+						&VarType{typ{}, "Y"},
+						&VarType{typ{}, "Z"},
+					},
+					&VarType{typ{}, "W"},
+				}},
+			},
+			[]any{Subst{
+				"X" : &ArrowType{typ{},
+					&VarType{typ{}, "Y"},
+					&VarType{typ{}, "Z"},
+				},
+				"W" : &ProductType{typ{},
 					&ArrowType{typ{},
 						&VarType{typ{}, "Y"},
 						&VarType{typ{}, "Z"},
