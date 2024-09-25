@@ -882,3 +882,68 @@ func TestParserProductType(t *testing.T) {
 		},
 	})
 }
+
+func TestParserProduct(t *testing.T) {
+	ftests.Run(t, []ftests.Test{
+		{
+			"<>",
+			parse,
+			[]any{strings.NewReader("<>"), ""},
+			[]any{
+				nil,
+				fmt.Errorf("Unexpected token: >"),
+			},
+		},
+		{
+			"<X>",
+			parse,
+			[]any{strings.NewReader("<X>"), ""},
+			[]any{
+				&VarExpr{expr{}, "X"},
+				nil,
+			},
+		},
+		{
+			"<X, Y>",
+			parse,
+			[]any{strings.NewReader("<X, Y>"), ""},
+			[]any{
+				&ProductExpr{expr{},
+					&VarExpr{expr{}, "X"},
+					&VarExpr{expr{}, "Y"},
+				},
+				nil,
+			},
+		},
+		{
+			"<X, Y, Z>",
+			parse,
+			[]any{strings.NewReader("<X, Y, Z>"), ""},
+			[]any{
+				&ProductExpr{expr{},
+					&VarExpr{expr{}, "X"},
+					&ProductExpr{expr{},
+						&VarExpr{expr{}, "Y"},
+						&VarExpr{expr{}, "Z"},
+					},
+				},
+				nil,
+			},
+		},
+		{
+			"<X, <Y, Z>>",
+			parse,
+			[]any{strings.NewReader("<X, <Y, Z>>"), ""},
+			[]any{
+				&ProductExpr{expr{},
+					&VarExpr{expr{}, "X"},
+					&ProductExpr{expr{},
+						&VarExpr{expr{}, "Y"},
+						&VarExpr{expr{}, "Z"},
+					},
+				},
+				nil,
+			},
+		},
+	})
+}

@@ -37,6 +37,7 @@ const (
 
 	tokenLess       // <
 	tokenMore       // >
+	tokenComa       // ,
 
 	tokenOr         // |
 	tokenAnd        // &

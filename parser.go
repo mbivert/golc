@@ -210,6 +210,12 @@ type BinaryExpr struct {
 	left, right Expr
 }
 
+// NOTE/TODO: probably better with a []Expr, len ≥ 2
+type ProductExpr struct {
+	expr
+	left, right Expr
+}
+
 type parser struct {
 	scanner
 	errf func(string, ...interface{})
@@ -381,12 +387,12 @@ func (p *parser) star() *UnitExpr {
 
 func (p *parser) parenExpr() Expr {
 	p.next()
-	e := p.appExpr()
+	x := p.appExpr()
 	if !p.has(tokenRParen) {
 		p.errf("Expecting left paren, got: %s", p.tok.kind.String())
 	}
 	p.next()
-	return e
+	return x
 }
 
 func (p *parser) unaryOpExpr() *UnaryExpr {
@@ -399,6 +405,56 @@ func (p *parser) varExpr() *VarExpr {
 	n := p.tok.raw
 	p.next()
 	return &VarExpr{expr{}, n}
+}
+
+func (p *parser) productExpr() Expr {
+	p.next()
+
+	var x *ProductExpr
+
+	// return value
+	r := &x
+
+	for {
+		y := p.appExpr()
+
+		// <Y> parsed as Y
+		if p.has(tokenMore) && x == nil {
+			return y
+		}
+
+		if p.has(tokenComa) {
+			p.next()
+
+			// first element of the pair
+			if x.left == nil {
+				x.left = y
+
+			// second element of the pair
+			} else if x.right == nil {
+				x.right = y
+
+			// Third element: replace the right element of the current
+			// pair by a new product. On its left, it has the previous
+			// right element, and on its right, the element we've just
+			// parsed. x should now point to this new product.
+			} else {
+				z := x.right
+				t := &ProductExpr{expr{}, z, y}
+				x.right = t
+				x = t
+			}
+
+		// We're done
+		} else if p.has(tokenMore) {
+			p.next()
+
+			x.right = y
+			return *r
+		}
+	}
+
+	return *r
 }
 
 func (p *parser) unaryExpr() Expr {
@@ -415,6 +471,8 @@ func (p *parser) unaryExpr() Expr {
 		return p.unaryOpExpr()
 	case tokenName:
 		return p.varExpr()
+	case tokenLess:
+		return p.productExpr()
 	default:
 		p.errf("Unexpected token: %s", k.String())
 	}
