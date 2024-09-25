@@ -214,3 +214,42 @@ func TestScannerScanAll(t *testing.T) {
 		},
 	})
 }
+
+func TestScannerProduct(t *testing.T) {
+	ftests.Run(t, []ftests.Test{
+		{
+			"〈>",
+			scanAll,
+			[]any{strings.NewReader("〈〉"), ""},
+			[]any{[]token{
+				token{tokenLBracket, 1, 1, "〈"},
+				token{tokenRBracket, 1, 2, "〉"},
+				token{tokenEOF,  1, 3, ""},
+			}, nil},
+		},
+		{
+			"<X>",
+			scanAll,
+			[]any{strings.NewReader("〈X〉"), ""},
+			[]any{[]token{
+				token{tokenLBracket, 1, 1, "〈"},
+				token{tokenName, 1, 2, "X"},
+				token{tokenRBracket, 1, 3, "〉"},
+				token{tokenEOF,  1, 4, ""},
+			}, nil},
+		},
+		{
+			"<X>",
+			scanAll,
+			[]any{strings.NewReader("〈X,   Y〉"), ""},
+			[]any{[]token{
+				token{tokenLBracket, 1, 1, "〈"},
+				token{tokenName, 1, 2, "X"},
+				token{tokenComa, 1, 3, ","},
+				token{tokenName, 1, 7, "Y"},
+				token{tokenRBracket, 1, 8, "〉"},
+				token{tokenEOF,  1, 9, ""},
+			}, nil},
+		},
+	})
+}

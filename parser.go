@@ -407,19 +407,24 @@ func (p *parser) varExpr() *VarExpr {
 	return &VarExpr{expr{}, n}
 }
 
+// NOTE: we're using 〈〉 over <> to avoid issues with things like <x, 1>3, 1>
 func (p *parser) productExpr() Expr {
+	fmt.Println("HERE", p.tok.kind)
 	p.next()
 
 	var x *ProductExpr
 
-	// return value
-	r := &x
+	ret := &x
 
 	for {
+		fmt.Println("HERE2", p.tok.kind)
+
 		y := p.appExpr()
+		fmt.Println("HERE3", p.tok.kind)
 
 		// <Y> parsed as Y
-		if p.has(tokenMore) && x == nil {
+		if p.has(tokenRBracket) && x == nil {
+			p.next()
 			return y
 		}
 
@@ -427,8 +432,8 @@ func (p *parser) productExpr() Expr {
 			p.next()
 
 			// first element of the pair
-			if x.left == nil {
-				x.left = y
+			if x == nil {
+				x = &ProductExpr{expr{}, y, nil}
 
 			// second element of the pair
 			} else if x.right == nil {
@@ -446,15 +451,15 @@ func (p *parser) productExpr() Expr {
 			}
 
 		// We're done
-		} else if p.has(tokenMore) {
+		} else if p.has(tokenRBracket) {
 			p.next()
 
 			x.right = y
-			return *r
+			return *ret
 		}
 	}
 
-	return *r
+	return *ret
 }
 
 func (p *parser) unaryExpr() Expr {
@@ -471,10 +476,10 @@ func (p *parser) unaryExpr() Expr {
 		return p.unaryOpExpr()
 	case tokenName:
 		return p.varExpr()
-	case tokenLess:
+	case tokenLBracket:
 		return p.productExpr()
 	default:
-		p.errf("Unexpected token: %s", k.String())
+		p.errf("Unexpected token: %s", k)
 	}
 	return nil
 }
@@ -507,11 +512,53 @@ func (p *parser) binaryExprs() Expr {
 	return p.binaryExpr(0)
 }
 
+// XXX naming convention is confusing
+// TODO: no rec, no let <x,y,...>, no let *
+func (p *parser) letIn() Expr {
+	if !p.has(tokenLet) {
+		return p.binaryExprs()
+	}
+
+	p.next()
+
+	if !p.has(tokenName) {
+		p.errf("Expecting variable name after let, got: %s", p.tok.kind)
+	}
+
+	n := p.varExpr()
+
+	if !p.has(tokenEqual) {
+		p.errf("Expecting equal after let $x, got: %s", p.tok.kind)
+	}
+
+	p.next()
+
+	x := p.appExpr()
+
+	if !p.has(tokenIn) {
+		p.errf("Expecting 'in' after let $x = $M, got %s", p.tok.kind)
+	}
+
+	p.next()
+
+	y := p.appExpr()
+
+	// XXX meh, no typing annotation
+	return &AppExpr{expr{},
+		&AbsExpr{expr{},
+			Type(&typ{}),
+			n.name,
+			x,
+		},
+		y,
+	}
+}
+
 func (p *parser) absExpr() Expr {
 	var n string
 
 	if !p.has(tokenLambda) {
-		x := p.binaryExprs()
+		x := p.letIn()
 
 		// is this the short form: "x. [...]" instead of "λx. [...]"
 		// (eventually with a type annotation)
@@ -548,10 +595,13 @@ func (p *parser) absExpr() Expr {
 }
 
 func (p *parser) appExpr() Expr {
+	fmt.Println("BLBL", p.tok.kind)
 	l := p.absExpr()
 
+	fmt.Println("XXX", l)
+
 	// XXX too fragile?
-	for !p.has(tokenEOF) && !p.has(tokenRParen) {
+	for !p.has(tokenEOF) && !p.has(tokenRParen) && !p.has(tokenRBracket) && !p.has(tokenComa) {
 		r := p.absExpr()
 		l = &AppExpr{expr{}, l, r}
 	}

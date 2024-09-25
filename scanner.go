@@ -65,6 +65,9 @@ var ones = map[rune]tokenKind{
 	'<': tokenLess,
 	'>': tokenMore,
 	',': tokenComa,
+	'=': tokenEqual,
+	'〈': tokenLBracket,
+	'〉': tokenRBracket,
 	// NOTE: tokenOr and tokenAnd were added only
 	// for 'foo||' to be parsed correctly (see isSep() below)
 	// (nothing wrong with implementing them either)

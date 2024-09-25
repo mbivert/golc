@@ -37,7 +37,12 @@ const (
 
 	tokenLess       // <
 	tokenMore       // >
+
 	tokenComa       // ,
+	tokenEqual      // =
+
+	tokenLBracket   // 〈
+	tokenRBracket   // 〉
 
 	tokenOr         // |
 	tokenAnd        // &

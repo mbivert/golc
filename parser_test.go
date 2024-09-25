@@ -888,16 +888,16 @@ func TestParserProduct(t *testing.T) {
 		{
 			"<>",
 			parse,
-			[]any{strings.NewReader("<>"), ""},
+			[]any{strings.NewReader("〈〉"), ""},
 			[]any{
 				nil,
-				fmt.Errorf("Unexpected token: >"),
+				fmt.Errorf(":1:2: Unexpected token: 〉"),
 			},
 		},
 		{
 			"<X>",
 			parse,
-			[]any{strings.NewReader("<X>"), ""},
+			[]any{strings.NewReader("〈X〉"), ""},
 			[]any{
 				&VarExpr{expr{}, "X"},
 				nil,
@@ -906,7 +906,7 @@ func TestParserProduct(t *testing.T) {
 		{
 			"<X, Y>",
 			parse,
-			[]any{strings.NewReader("<X, Y>"), ""},
+			[]any{strings.NewReader("〈X, Y〉"), ""},
 			[]any{
 				&ProductExpr{expr{},
 					&VarExpr{expr{}, "X"},
@@ -918,7 +918,7 @@ func TestParserProduct(t *testing.T) {
 		{
 			"<X, Y, Z>",
 			parse,
-			[]any{strings.NewReader("<X, Y, Z>"), ""},
+			[]any{strings.NewReader("〈X, Y, Z〉"), ""},
 			[]any{
 				&ProductExpr{expr{},
 					&VarExpr{expr{}, "X"},
@@ -933,7 +933,7 @@ func TestParserProduct(t *testing.T) {
 		{
 			"<X, <Y, Z>>",
 			parse,
-			[]any{strings.NewReader("<X, <Y, Z>>"), ""},
+			[]any{strings.NewReader("〈X, 〈Y, Z〉〉"), ""},
 			[]any{
 				&ProductExpr{expr{},
 					&VarExpr{expr{}, "X"},
@@ -943,6 +943,38 @@ func TestParserProduct(t *testing.T) {
 					},
 				},
 				nil,
+			},
+		},
+	})
+}
+
+func TestParserBasicLetIn(t *testing.T) {
+	ftests.Run(t, []ftests.Test{
+		{
+			"let",
+			parse,
+			[]any{strings.NewReader("let"), ""},
+			[]any{
+				nil,
+				fmt.Errorf(":1:4: Expecting variable name after let, got: EOF"),
+			},
+		},
+		{
+			"let 42",
+			parse,
+			[]any{strings.NewReader("let 42"), ""},
+			[]any{
+				nil,
+				fmt.Errorf(":1:5: Expecting variable name after let, got: int64"),
+			},
+		},
+		{
+			"let x 42",
+			parse,
+			[]any{strings.NewReader("let x 42"), ""},
+			[]any{
+				nil,
+				fmt.Errorf(":1:7: Expecting equal after let $x, got: int64"),
 			},
 		},
 	})
