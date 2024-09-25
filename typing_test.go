@@ -306,6 +306,17 @@ func TestTypingMgu1(t *testing.T) {
 			[]any{Subst{}, nil},
 		},
 		{
+			"case 2: mgu(X; B) = [X ↦ B] if X ∉ B",
+			mgu,
+			[]any{
+				[]Type{&VarType{typ{}, "X"}},
+				[]Type{&VarType{typ{}, "B"}},
+			},
+			[]any{Subst{
+				"X": &VarType{typ{}, "B"},
+			}, nil},
+		},
+		{
 			"case 2: mgu(X; B) = [X ↦ B] if X ∉ B (B is →)",
 			mgu,
 			[]any{
@@ -577,7 +588,7 @@ func TestTypingMgu(t *testing.T) {
 			}, nil},
 		},
 		{
-			"case 7: mgu(X × (X × Y), (Y → Z) × W) (p84 tweaked)",
+			"case 7/8: mgu(X × (X × Y), (Y → Z) × W) (p84, tweaked)",
 			mgu,
 			[]any{
 				[]Type{&ProductType{typ{},
@@ -607,6 +618,35 @@ func TestTypingMgu(t *testing.T) {
 					},
 					&VarType{typ{}, "Y"},
 				},
+			}, nil},
+		},
+		// https://stackoverflow.com/q/65766823
+		//	XXX/TODO: this seems to contradict what was highlighted
+		//	by the previous example; Selinger doesn't talk about
+		//	"simultaneous substitutions" either.
+		{
+			"case 7: mgu(X → (Y → Z), Z → (P → bool)",
+			mgu,
+			[]any{
+				[]Type{&ArrowType{typ{},
+					&VarType{typ{}, "X"},
+					&ArrowType{typ{},
+						&VarType{typ{}, "Y"},
+						&VarType{typ{}, "Z"},
+					},
+				}},
+				[]Type{&ArrowType{typ{},
+					&VarType{typ{}, "Z"},
+					&ArrowType{typ{},
+						&VarType{typ{}, "P"},
+						&BoolType{typ{}},
+					},
+				}},
+			},
+			[]any{Subst{
+				"Z" : &BoolType{typ{}},
+				"Y" : &VarType{typ{}, "P"},
+				"X" : &BoolType{typ{}},
 			}, nil},
 		},
 	})

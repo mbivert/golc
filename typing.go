@@ -145,10 +145,10 @@ func mgu1(a, b Type) (Subst, error) {
 				// no entry: id() assumed
 				return Subst{}, nil
 			}
-		} else {
-			// case 2 / 3
-			return mguVarType(b, av.name)
 		}
+
+		// case 2 / 3
+		return mguVarType(b, av.name)
 	}
 
 	if bv, ok := b.(*VarType); ok {
@@ -156,19 +156,21 @@ func mgu1(a, b Type) (Subst, error) {
 		return mguVarType(a, bv.name)
 	}
 
-	// case 6 (maybe)
 	if _, ok := a.(*BoolType); ok {
 		if _, ok := b.(*BoolType); ok {
+			// case 6
 			return Subst{}, nil
 		}
 	}
 	if _, ok := a.(*IntType); ok {
 		if _, ok := b.(*IntType); ok {
+			// case 6
 			return Subst{}, nil
 		}
 	}
 	if _, ok := a.(*FloatType); ok {
 		if _, ok := b.(*FloatType); ok {
+			// case 6
 			return Subst{}, nil
 		}
 	}
