@@ -117,12 +117,13 @@ func sInferType(x Expr) (Expr, error) {
 
 			tl, ok := l.getType().(*ArrowType)
 			if !ok {
-				return nil, fmt.Errorf("Trying to apply to non-arrow: %s", tl)
+				return nil, fmt.Errorf("Trying to apply to non-arrow: '%s'", l.getType())
 			}
 			if reflect.TypeOf(tl.left) != reflect.TypeOf(r.getType()) {
-				return nil, fmt.Errorf("Can't apply '%s' to '%s'", tl.left, l.getType())
+				return nil, fmt.Errorf("Can't apply '%s' to '%s'", r.getType(), l.getType())
 			}
 
+			x.setType(l.(*AbsExpr).right.getType())
 			x.(*AppExpr).left = l
 			x.(*AppExpr).right = r
 
