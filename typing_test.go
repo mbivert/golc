@@ -536,7 +536,7 @@ func TestTypingMguFails(t *testing.T) {
 }
 
 func TestTypingMgu(t *testing.T) {
-//	var nilSubst Subst
+	//	var nilSubst Subst
 
 	ftests.Run(t, []ftests.Test{
 		{
@@ -552,7 +552,7 @@ func TestTypingMgu(t *testing.T) {
 					&VarType{typ{}, "B"},
 				}},
 			},
-			[]any{Subst{"A" : &BoolType{typ{}}}, nil},
+			[]any{Subst{"A": &BoolType{typ{}}}, nil},
 		},
 		{
 			"case 7: mgu(X → (X → Y), (Y → Z) → W) (p84)",
@@ -574,11 +574,11 @@ func TestTypingMgu(t *testing.T) {
 				}},
 			},
 			[]any{Subst{
-				"X" : &ArrowType{typ{},
+				"X": &ArrowType{typ{},
 					&VarType{typ{}, "Y"},
 					&VarType{typ{}, "Z"},
 				},
-				"W" : &ArrowType{typ{},
+				"W": &ArrowType{typ{},
 					&ArrowType{typ{},
 						&VarType{typ{}, "Y"},
 						&VarType{typ{}, "Z"},
@@ -607,11 +607,11 @@ func TestTypingMgu(t *testing.T) {
 				}},
 			},
 			[]any{Subst{
-				"X" : &ArrowType{typ{},
+				"X": &ArrowType{typ{},
 					&VarType{typ{}, "Y"},
 					&VarType{typ{}, "Z"},
 				},
-				"W" : &ProductType{typ{},
+				"W": &ProductType{typ{},
 					&ArrowType{typ{},
 						&VarType{typ{}, "Y"},
 						&VarType{typ{}, "Z"},
@@ -644,9 +644,9 @@ func TestTypingMgu(t *testing.T) {
 				}},
 			},
 			[]any{Subst{
-				"Z" : &BoolType{typ{}},
-				"Y" : &VarType{typ{}, "P"},
-				"X" : &BoolType{typ{}},
+				"Z": &BoolType{typ{}},
+				"Y": &VarType{typ{}, "P"},
+				"X": &BoolType{typ{}},
 			}, nil},
 		},
 	})

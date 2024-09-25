@@ -69,10 +69,10 @@ func freeVars(x Expr) map[string]bool {
 			// want to remove it. Think:
 			//	(λx. y (λy. x y z))
 			// Here, the second y is bound, but the first one is free.
-			_, hasBefore := m[x.(*AbsExpr).bound]
+			_, hasBefore := m[x.(*AbsExpr).name]
 			aux(x.(*AbsExpr).right, m)
 			if !hasBefore {
-				delete(m, x.(*AbsExpr).bound)
+				delete(m, x.(*AbsExpr).name)
 			}
 		case *AppExpr:
 			aux(x.(*AppExpr).left, m)
@@ -102,7 +102,7 @@ func allVars(x Expr) map[string]bool {
 		case *VarExpr:
 			m[x.(*VarExpr).name] = true
 		case *AbsExpr:
-			m[x.(*AbsExpr).bound] = true
+			m[x.(*AbsExpr).name] = true
 			aux(x.(*AbsExpr).right, m)
 		case *AppExpr:
 			aux(x.(*AppExpr).left, m)
@@ -135,11 +135,11 @@ func prettyPrint(x Expr) string {
 		case *AbsExpr:
 			if inAbs {
 				return fmt.Sprintf("%s. %s",
-					x.(*AbsExpr).bound,
+					x.(*AbsExpr).name,
 					aux(x.(*AbsExpr).right, true, false))
 			} else {
 				return fmt.Sprintf("(λ%s. %s)",
-					x.(*AbsExpr).bound,
+					x.(*AbsExpr).name,
 					aux(x.(*AbsExpr).right, true, false))
 			}
 		case *AppExpr:

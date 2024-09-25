@@ -187,8 +187,8 @@ type AbsExpr struct {
 	// That type however is merely the left part of
 	// an ArrowType{} which'll make the type of the AbsExpr,
 	// so we can't fit it in expr.typ
-	bType Type
-	bound string
+	typ   Type
+	name  string
 	right Expr
 }
 

@@ -49,4 +49,14 @@ https://caml.inria.fr/pub/docs/u3-ocaml/ocaml-ml.html
 
 https://github.com/ocaml/ocaml/blob/trunk/typing/HACKING.adoc
 
+https://github.com/roehst/tapl-implementations/tree/master/tyarith
+
+https://en.wikipedia.org/wiki/Unification_(computer_science)#Application:_type_inference
+
+https://en.wikipedia.org/wiki/Hindley%E2%80%93Milner_type_system
+
+https://github.com/mspertus/TAPL
+
+https://www.csd.uwo.ca/~mmorenom/cs2209_moreno/read/read6-unification.pdf
+
 -->
