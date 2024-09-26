@@ -58,6 +58,7 @@ var ones = map[rune]tokenKind{
 	')': tokenRParen,
 	'.': tokenDot,
 	':': tokenColon,
+	'!': tokenExcl,
 	'+': tokenPlus,
 	'-': tokenMinus,
 	'*': tokenStar,
@@ -83,7 +84,6 @@ var ones = map[rune]tokenKind{
 	// '⊗'  : tokenOMult,
 	// '⊕'  : tokenOPlus,
 	// '⊤'  : tokenTrue,
-	// '!'  : tokenExclamation,
 }
 
 // two ascii characters tokens

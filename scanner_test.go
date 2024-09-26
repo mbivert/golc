@@ -218,7 +218,7 @@ func TestScannerScanAll(t *testing.T) {
 func TestScannerProduct(t *testing.T) {
 	ftests.Run(t, []ftests.Test{
 		{
-			"〈>",
+			"〈〉",
 			scanAll,
 			[]any{strings.NewReader("〈〉"), ""},
 			[]any{[]token{
@@ -228,7 +228,7 @@ func TestScannerProduct(t *testing.T) {
 			}, nil},
 		},
 		{
-			"<X>",
+			"〈X〉",
 			scanAll,
 			[]any{strings.NewReader("〈X〉"), ""},
 			[]any{[]token{
@@ -239,7 +239,7 @@ func TestScannerProduct(t *testing.T) {
 			}, nil},
 		},
 		{
-			"<X>",
+			"〈X,   Y〉",
 			scanAll,
 			[]any{strings.NewReader("〈X,   Y〉"), ""},
 			[]any{[]token{
@@ -249,6 +249,21 @@ func TestScannerProduct(t *testing.T) {
 				token{tokenName, 1, 7, "Y"},
 				token{tokenRBracket, 1, 8, "〉"},
 				token{tokenEOF, 1, 9, ""},
+			}, nil},
+		},
+	})
+}
+
+func TestScannerExcl(t *testing.T) {
+	ftests.Run(t, []ftests.Test{
+		{
+			"!true",
+			scanAll,
+			[]any{strings.NewReader("!true"), ""},
+			[]any{[]token{
+				token{tokenExcl, 1, 1, "!"},
+				token{tokenBool, 1, 2, "true"},
+				token{tokenEOF, 1, 6, ""},
 			}, nil},
 		},
 	})

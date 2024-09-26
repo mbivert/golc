@@ -494,7 +494,7 @@ func (p *parser) unaryExpr() Expr {
 		return p.bool()
 	case tokenLParen:
 		return p.parenExpr()
-	case tokenMinus, tokenPlus, tokenFMinus, tokenFPlus:
+	case tokenMinus, tokenPlus, tokenFMinus, tokenFPlus, tokenExcl:
 		return p.unaryOpExpr()
 	case tokenName:
 		return p.varExpr()

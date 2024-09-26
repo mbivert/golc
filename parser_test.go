@@ -396,6 +396,19 @@ func TestParserMathExprs(t *testing.T) {
 				nil,
 			},
 		},
+		{
+			"!(true)",
+			parse,
+			[]any{strings.NewReader("!(true)"), ""},
+			[]any{
+				&UnaryExpr{
+					expr{},
+					tokenExcl,
+					&BoolExpr{expr{&BoolType{typ{}}}, true},
+				},
+				nil,
+			},
+		},
 	})
 }
 

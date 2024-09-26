@@ -38,17 +38,46 @@ func inferSType(x Expr) (Expr, error) {
 
 		// We may need some typechecking here
 		case *UnaryExpr:
+			r := x.(*UnaryExpr).right
+
+			if r, err = aux(r, ctx); err != nil {
+				return nil, err
+			}
+
 			switch x.(*UnaryExpr).op {
 			// Right must be int
 			case tokenMinus:
+				fallthrough
 			case tokenPlus:
+				if _, rok := r.getType().(*IntType); !rok {
+					return nil, fmt.Errorf("%s : int → int; got %s",
+						x.(*UnaryExpr).op, r.getType(),
+					)
+				}
+				x.setType(&IntType{typ{}})
 
 			// Right must be float
 			case tokenFMinus:
+				fallthrough
 			case tokenFPlus:
+				if _, rok := r.getType().(*FloatType); !rok {
+					return nil, fmt.Errorf("%s : float → float; got %s",
+						x.(*UnaryExpr).op, r.getType(),
+					)
+				}
+				x.setType(&FloatType{typ{}})
 
-				// Right must be bool
-				// case tokenExclamation:
+			// Right must be bool
+			case tokenExcl:
+				if _, rok := r.getType().(*BoolType); !rok {
+					return nil, fmt.Errorf("%s : bool → bool; got %s",
+						x.(*UnaryExpr).op, r.getType(),
+					)
+				}
+				x.setType(&BoolType{typ{}})
+
+			default:
+				panic("assert")
 			}
 
 		// Again, we may need to typecheck things here

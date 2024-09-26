@@ -297,3 +297,73 @@ func TestSTypingInferInferSTypeProduct(t *testing.T) {
 		},
 	})
 }
+
+// TODO: again, not extensive
+func TestSTypingInferInferSTypeUnary(t *testing.T) {
+	ftests.Run(t, []ftests.Test{
+		{
+			"+true",
+			inferSType,
+			[]any{mustParse("+true")},
+			[]any{
+				nil,
+				fmt.Errorf("+ : int → int; got bool"),
+			},
+		},
+		{
+			"+.true",
+			inferSType,
+			[]any{mustParse("+.true")},
+			[]any{
+				nil,
+				fmt.Errorf("+. : float → float; got bool"),
+			},
+		},
+		{
+			"+3",
+			inferSType,
+			[]any{mustParse("+3")},
+			[]any{
+				&UnaryExpr{expr{&IntType{typ{}}},
+					tokenPlus,
+					&IntExpr{expr{&IntType{typ{}}}, 3},
+				},
+				nil,
+			},
+		},
+		{
+			"-.3.",
+			inferSType,
+			[]any{mustParse("-.3.")},
+			[]any{
+				&UnaryExpr{expr{&FloatType{typ{}}},
+					tokenFMinus,
+					&FloatExpr{expr{&FloatType{typ{}}}, 3.},
+				},
+				nil,
+			},
+		},
+		{
+			"!3",
+			inferSType,
+			[]any{mustParse("!3")},
+			[]any{
+				nil,
+				fmt.Errorf("! : bool → bool; got int"),
+			},
+		},
+		{
+			"!true",
+			inferSType,
+			[]any{mustParse("!true")},
+			[]any{
+				&UnaryExpr{expr{&BoolType{typ{}}},
+					tokenExcl,
+					&BoolExpr{expr{&BoolType{typ{}}}, true},
+				},
+				nil,
+			},
+		},
+	})
+}
+
