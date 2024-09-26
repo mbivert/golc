@@ -1,3 +1,6 @@
+/*
+ * Evaluation. We assume things have been typechecked.
+ */
 package main
 
 func evalUnaryExpr(x *UnaryExpr) (Expr, error) {
@@ -20,22 +23,18 @@ func evalUnaryExpr(x *UnaryExpr) (Expr, error) {
 	case tokenPlus:
 		fallthrough
 	case tokenMinus:
-		ir, ok := r.(*IntExpr)
-		if !ok {
-			panic("oooo")
-		}
-		return &IntExpr{expr{&IntType{typ{}}}, int64Ops[x.op](ir.v)}, nil
+		return &IntExpr{expr{&IntType{typ{}}}, int64Ops[x.op](r.(*IntExpr).v)}, nil
 
 	case tokenFPlus:
 		fallthrough
 	case tokenFMinus:
-		ir, ok := r.(*FloatExpr)
-		if !ok {
-			panic("oooo")
-		}
-		return &FloatExpr{expr{&FloatType{typ{}}}, float64Ops[x.op](ir.v)}, nil
+		return &FloatExpr{expr{&FloatType{typ{}}}, float64Ops[x.op](r.(*FloatExpr).v)}, nil
+
+	case tokenExcl:
+		return &BoolExpr{expr{&BoolType{typ{}}}, !r.(*BoolExpr).v}, nil
+
 	default:
-		panic("Unexpected unary operator " + x.op.String())
+		panic("TODO: " + x.op.String())
 	}
 
 	return nil, nil
@@ -58,14 +57,12 @@ func evalBinaryExpr(x *BinaryExpr) (Expr, error) {
 		tokenSlash: func(a, b int64) int64 { return a / b },
 	}
 
-	/*
-		int64CmpOps := map[tokenKind](func (int64,int64) bool) {
-			tokenLess   : func (a, b int64) bool { return a<b  },
-			tokenMore   : func (a, b int64) bool { return a>b  },
-			tokenLessEq : func (a, b int64) bool { return a<=b },
-			tokenMoreEq : func (a, b int64) bool { return a>=b },
-		}
-	*/
+	int64CmpOps := map[tokenKind](func (int64,int64) bool) {
+		tokenLess   : func (a, b int64) bool { return a<b  },
+		tokenMore   : func (a, b int64) bool { return a>b  },
+		tokenLessEq : func (a, b int64) bool { return a<=b },
+		tokenMoreEq : func (a, b int64) bool { return a>=b },
+	}
 
 	float64Ops := map[tokenKind](func(float64, float64) float64){
 		tokenPlus:  func(a, b float64) float64 { return a + b },
@@ -74,14 +71,17 @@ func evalBinaryExpr(x *BinaryExpr) (Expr, error) {
 		tokenSlash: func(a, b float64) float64 { return a / b },
 	}
 
-	/*
-		float64CmpOps := map[tokenKind](func (float64,float64) bool) {
-			tokenFLess   : func (a, b float64) bool { return a<b  },
-			tokenFMore   : func (a, b float64) bool { return a>b  },
-			tokenFLessEq : func (a, b float64) bool { return a<=b },
-			tokenFMoreEq : func (a, b float64) bool { return a>=b },
-		}
-	*/
+	float64CmpOps := map[tokenKind](func (float64,float64) bool) {
+		tokenFLess   : func (a, b float64) bool { return a<b  },
+		tokenFMore   : func (a, b float64) bool { return a>b  },
+		tokenFLessEq : func (a, b float64) bool { return a<=b },
+		tokenFMoreEq : func (a, b float64) bool { return a>=b },
+	}
+
+	boolOps := map[tokenKind](func(bool, bool) bool){
+		tokenAndAnd : func(a, b bool) bool { return a && b },
+		tokenOrOr   : func(a, b bool) bool { return a || b },
+	}
 
 	switch x.op {
 	// XXX/TODO: should we allow e.g. x + 3? where x
@@ -93,18 +93,20 @@ func evalBinaryExpr(x *BinaryExpr) (Expr, error) {
 	case tokenMinus:
 		fallthrough
 	case tokenSlash:
-		// TODO/XXX Theoretically, we should be running our typechecking
-		// before starting the evaluation, because we're doing static
-		// typechecking; so should we certain that this should hold?
-		il, ok := l.(*IntExpr)
-		if !ok {
-			panic("ooo")
-		}
-		ir, ok := r.(*IntExpr)
-		if !ok {
-			panic("oooo")
-		}
-		return &IntExpr{expr{&IntType{typ{}}}, int64Ops[x.op](il.v, ir.v)}, nil
+		return &IntExpr{expr{&IntType{typ{}}},
+			int64Ops[x.op](l.(*IntExpr).v, r.(*IntExpr).v),
+		}, nil
+
+	case tokenLess:
+		fallthrough
+	case tokenMore:
+		fallthrough
+	case tokenLessEq:
+		fallthrough
+	case tokenMoreEq:
+		return &BoolExpr{expr{&BoolType{typ{}}},
+			int64CmpOps[x.op](l.(*IntExpr).v, r.(*IntExpr).v),
+		}, nil
 
 	case tokenFPlus:
 		fallthrough
@@ -113,21 +115,30 @@ func evalBinaryExpr(x *BinaryExpr) (Expr, error) {
 	case tokenFMinus:
 		fallthrough
 	case tokenFSlash:
-		// TODO/XXX Theoretically, we should be running our typechecking
-		// before starting the evaluation, because we're doing static
-		// typechecking; so should we certain that this should hold?
-		il, ok := l.(*FloatExpr)
-		if !ok {
-			panic("ooo")
-		}
-		ir, ok := r.(*FloatExpr)
-		if !ok {
-			panic("oooo")
-		}
-		return &FloatExpr{expr{&FloatType{typ{}}}, float64Ops[x.op](il.v, ir.v)}, nil
+		return &FloatExpr{expr{&FloatType{typ{}}},
+			float64Ops[x.op](l.(*FloatExpr).v, r.(*FloatExpr).v),
+		}, nil
+
+	case tokenFLess:
+		fallthrough
+	case tokenFMore:
+		fallthrough
+	case tokenFLessEq:
+		fallthrough
+	case tokenFMoreEq:
+		return &BoolExpr{expr{&BoolType{typ{}}},
+			float64CmpOps[x.op](l.(*FloatExpr).v, r.(*FloatExpr).v),
+		}, nil
+
+	case tokenAndAnd:
+		fallthrough
+	case tokenOrOr:
+		return &BoolExpr{expr{&BoolType{typ{}}},
+			boolOps[x.op](l.(*BoolExpr).v, r.(*BoolExpr).v),
+		}, nil
 
 	default:
-		panic("TODO")
+		panic("TODO: "+x.op.String())
 	}
 }
 
@@ -179,4 +190,9 @@ func evalExpr(x Expr) (Expr, error) {
 		return evalBinaryExpr(x.(*BinaryExpr))
 	}
 	return nil, nil
+}
+
+// To ease tests so far
+func mustSTypeParse(s string) Expr {
+	return mustSType(mustParse(s))
 }

@@ -236,6 +236,19 @@ func TestSTypingInferSTypeExprs(t *testing.T) {
 				nil,
 			},
 		},
+		{
+			"3<5",
+			inferSType,
+			[]any{mustParse("3<5")},
+			[]any{
+				&BinaryExpr{expr{&BoolType{typ{}}},
+					tokenLess,
+					&IntExpr{expr{&IntType{typ{}}}, 3},
+					&IntExpr{expr{&IntType{typ{}}}, 5},
+				},
+				nil,
+			},
+		},
 	})
 }
 

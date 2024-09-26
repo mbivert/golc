@@ -96,7 +96,7 @@ func inferSType(x Expr) (Expr, error) {
 			// (quick test yields an issue with the setType(T{typ{}}))
 
 			switch x.(*BinaryExpr).op {
-			// Left right must be ints
+			// (int×int) → int
 			case tokenMinus:
 				fallthrough
 			case tokenPlus:
@@ -104,7 +104,16 @@ func inferSType(x Expr) (Expr, error) {
 			case tokenStar:
 				fallthrough
 			case tokenSlash:
-				fallthrough
+				_, lok := l.getType().(*IntType)
+				_, rok := r.getType().(*IntType)
+				if !lok || ! rok {
+					return nil, fmt.Errorf("%s : (int×int) → int; got (%s×%s)",
+						x.(*BinaryExpr).op, l.getType(), r.getType(),
+					)
+				}
+				x.setType(&IntType{typ{}})
+
+			// (int×int) → bool
 			case tokenLessEq:
 				fallthrough
 			case tokenMoreEq:
@@ -115,13 +124,13 @@ func inferSType(x Expr) (Expr, error) {
 				_, lok := l.getType().(*IntType)
 				_, rok := r.getType().(*IntType)
 				if !lok || ! rok {
-					return nil, fmt.Errorf("%s : (int×int) → int; got (%s×%s)",
+					return nil, fmt.Errorf("%s : (int×int) → bool; got (%s×%s)",
 						x.(*BinaryExpr).op, l.getType(), r.getType(),
 					)
 				}
-				x.setType(&IntType{typ{}})
+				x.setType(&BoolType{typ{}})
 
-			// Left right must be floats
+			// (float×float) → float
 			case tokenFMinus:
 				fallthrough
 			case tokenFPlus:
@@ -129,7 +138,16 @@ func inferSType(x Expr) (Expr, error) {
 			case tokenFStar:
 				fallthrough
 			case tokenFSlash:
-				fallthrough
+				_, lok := l.getType().(*FloatType)
+				_, rok := r.getType().(*FloatType)
+				if !lok || ! rok {
+					return nil, fmt.Errorf("%s : (float×float) → float; got (%s×%s)",
+						x.(*BinaryExpr).op, l.getType(), r.getType(),
+					)
+				}
+				x.setType(&FloatType{typ{}})
+
+			// (float×float) → bool
 			case tokenFLessEq:
 				fallthrough
 			case tokenFMoreEq:
@@ -144,7 +162,7 @@ func inferSType(x Expr) (Expr, error) {
 						x.(*BinaryExpr).op, l.getType(), r.getType(),
 					)
 				}
-				x.setType(&FloatType{typ{}})
+				x.setType(&BoolType{typ{}})
 
 			// Left/right must be bools
 			case tokenOrOr:
@@ -158,6 +176,7 @@ func inferSType(x Expr) (Expr, error) {
 					)
 				}
 				x.setType(&BoolType{typ{}})
+
 			default:
 				panic("assert")
 			}

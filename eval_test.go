@@ -17,11 +17,38 @@ func TestEvalArithmetic(t *testing.T) {
 			},
 		*/
 		{
-			"Basic addition",
+			"3+4",
 			evalExpr,
-			[]any{mustParse("3+4")},
+			[]any{mustSTypeParse("3+4")},
 			[]any{
 				&IntExpr{expr{&IntType{typ{}}}, 7},
+				nil,
+			},
+		},
+		{
+			"3+4*2",
+			evalExpr,
+			[]any{mustSTypeParse("3+4*2")},
+			[]any{
+				&IntExpr{expr{&IntType{typ{}}}, 11},
+				nil,
+			},
+		},
+		{
+			"(3+4)*2",
+			evalExpr,
+			[]any{mustSTypeParse("(3+4)*2")},
+			[]any{
+				&IntExpr{expr{&IntType{typ{}}}, 14},
+				nil,
+			},
+		},
+		{
+			"(2<3) && !(true)",
+			evalExpr,
+			[]any{mustSTypeParse("(2<3) && !(true)")},
+			[]any{
+				&BoolExpr{expr{&BoolType{typ{}}}, false},
 				nil,
 			},
 		},
