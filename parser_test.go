@@ -96,15 +96,14 @@ func (e *BinaryExpr) MarshalJSON() ([]byte, error) {
  *	https://github.com/mbivert/nix-series-code/blob/master/lambda/parse_test.nix
  *	https://github.com/mbivert/nix-series-code/blob/master/exprs_test.nix
  *
- * Many more tests to import from:
+ * More tests to import from:
  *	https://github.com/mbivert/nix-series-code/blob/master/lambda_test.nix
  *
  * We're focusing here on basic lambda calculus extended with some
  * scalar types (eg. bool, int, float) and basic arithmetic operations.
- *
- * TODO: split bare lambda calculus & scalar expressions.
  */
-func TestParserTypeless(t *testing.T) {
+
+func TestParserMathExprs(t *testing.T) {
 	ftests.Run(t, []ftests.Test{
 		{
 			"empty input",
@@ -148,17 +147,7 @@ func TestParserTypeless(t *testing.T) {
 			[]any{strings.NewReader("  false "), ""},
 			[]any{&BoolExpr{expr{&BoolType{}}, false}, nil},
 		},
-		/*
-			{
-				"single int + garbage",
-				parse,
-				[]any{strings.NewReader("  1234 12"), ""},
-				[]any{
-					&IntExpr{expr{&IntType{}}, 1234},
-					fmt.Errorf(":1:8: Unexpected token: int64"),
-				},
-			},
-		*/
+		// NOTE: this will be rejected during the type inference/checking phase
 		{
 			"two consecutives ints: 'bad' function call, still parses OK",
 			parse,
@@ -407,6 +396,11 @@ func TestParserTypeless(t *testing.T) {
 				nil,
 			},
 		},
+	})
+}
+
+func TestParserUntypedλCalc(t *testing.T) {
+	ftests.Run(t, []ftests.Test{
 		{
 			"basic abstraction",
 			parse,
