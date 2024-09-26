@@ -125,6 +125,8 @@ func allVars(x Expr) map[string]bool {
 	return aux(x, map[string]bool{})
 }
 
+// TODO: this can be removed, as Expr & cie now are Stringer().
+// They're a bit rough though (too much parenthesis)
 func prettyPrint(x Expr) string {
 	var aux func(Expr, bool, bool) string
 

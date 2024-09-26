@@ -83,8 +83,10 @@ type FloatType struct {
 	typ
 }
 
-func (t *VarType) String() string {
-	return t.name
+// type variable
+type VarType struct {
+	typ
+	name string
 }
 
 func (t *ArrowType) String() string {
@@ -127,10 +129,8 @@ func (t *FloatType) String() string {
 	return "float"
 }
 
-// type variable
-type VarType struct {
-	typ
-	name string
+func (t *VarType) String() string {
+	return t.name
 }
 
 // NOTE: I'm not sure we can implement a recursive union type
@@ -145,6 +145,8 @@ type Expr interface {
 	aExpr()
 	getType() Type
 	setType(Type)
+
+	String() string
 }
 
 type expr struct {
@@ -154,6 +156,7 @@ type expr struct {
 func (e *expr) aExpr()           {}
 func (e *expr) getType() Type    { return e.typ }
 func (e *expr) setType(typ Type) { e.typ = typ }
+func (e *expr) String() string   { return "" }
 
 type IntExpr struct {
 	expr
@@ -214,6 +217,46 @@ type BinaryExpr struct {
 type ProductExpr struct {
 	expr
 	left, right Expr
+}
+
+func (e *IntExpr) String() string {
+	return fmt.Sprintf("%d", e.v)
+}
+
+func (e *UnitExpr) String() string {
+	return "*"
+}
+
+func (e *FloatExpr) String() string {
+	return fmt.Sprintf("%f", e.v)
+}
+
+func (e *BoolExpr) String() string {
+	return fmt.Sprintf("%t", e.v)
+}
+
+func (e *VarExpr) String() string {
+	return fmt.Sprintf("%s", e.name)
+}
+
+func (e *AbsExpr) String() string {
+	return fmt.Sprintf("λ%s:%s.%s", e.name, e.typ, e.right)
+}
+
+func (e *AppExpr) String() string {
+	return fmt.Sprintf("(%s %s)", e.left, e.right)
+}
+
+func (e *UnaryExpr) String() string {
+	return fmt.Sprintf("(%s %s)", e.op, e.right)
+}
+
+func (e *BinaryExpr) String() string {
+	return fmt.Sprintf("(%s %s %s)", e.left, e.op, e.right)
+}
+
+func (e *ProductExpr) String() string {
+	return fmt.Sprintf("〈%s, %s〉", e.left, e.right)
 }
 
 type parser struct {
@@ -408,22 +451,19 @@ func (p *parser) varExpr() *VarExpr {
 }
 
 // NOTE: we're using 〈〉 over <> to avoid issues with things like <x, 1>3, 1>
+// TODO: cleanup
 func (p *parser) productExpr() Expr {
-	fmt.Println("HERE", p.tok.kind)
 	p.next()
 
-	var x *ProductExpr
+	var ret *ProductExpr
 
-	ret := &x
+	x := &ret
 
 	for {
-		fmt.Println("HERE2", p.tok.kind)
-
 		y := p.appExpr()
-		fmt.Println("HERE3", p.tok.kind)
 
 		// <Y> parsed as Y
-		if p.has(tokenRBracket) && x == nil {
+		if p.has(tokenRBracket) && *x == nil {
 			p.next()
 			return y
 		}
@@ -432,34 +472,41 @@ func (p *parser) productExpr() Expr {
 			p.next()
 
 			// first element of the pair
-			if x == nil {
-				x = &ProductExpr{expr{}, y, nil}
+			if *x == nil {
+				*x = &ProductExpr{expr{}, y, nil}
 
 			// second element of the pair
-			} else if x.right == nil {
-				x.right = y
+			} else if (*x).right == nil {
+				(*x).right = y
 
 			// Third element: replace the right element of the current
 			// pair by a new product. On its left, it has the previous
 			// right element, and on its right, the element we've just
 			// parsed. x should now point to this new product.
 			} else {
-				z := x.right
+				z := (*x).right
 				t := &ProductExpr{expr{}, z, y}
-				x.right = t
-				x = t
+				(*x).right = t
+				x = &t
 			}
 
 		// We're done
 		} else if p.has(tokenRBracket) {
 			p.next()
 
-			x.right = y
-			return *ret
+			if (*x).right != nil {
+				z := (*x).right
+				t := &ProductExpr{expr{}, z, y}
+				(*x).right = t
+				x = &t
+			} else {
+				(*x).right = y
+			}
+			return ret
 		}
 	}
 
-	return *ret
+	return ret
 }
 
 func (p *parser) unaryExpr() Expr {
@@ -595,10 +642,7 @@ func (p *parser) absExpr() Expr {
 }
 
 func (p *parser) appExpr() Expr {
-	fmt.Println("BLBL", p.tok.kind)
 	l := p.absExpr()
-
-	fmt.Println("XXX", l)
 
 	// XXX too fragile?
 	for !p.has(tokenEOF) && !p.has(tokenRParen) && !p.has(tokenRBracket) && !p.has(tokenComa) {
