@@ -1,6 +1,7 @@
 package main
 
 import (
+	"encoding/json"
 	"fmt"
 	"strings"
 	"testing"
@@ -8,8 +9,90 @@ import (
 	"github.com/mbivert/ftests"
 )
 
+// unexported fields are unavailable to the json
+// package, and thus aren't visible in tests...
+func (e *IntExpr) MarshalJSON() ([]byte, error) {
+	return json.Marshal(struct {
+		T string
+		V   int64
+	}{
+		T: "int",
+		V: e.v,
+	})
+}
+
+func (e *FloatExpr) MarshalJSON() ([]byte, error) {
+	return json.Marshal(struct {
+		T string
+		V float64
+	}{
+		T: "float",
+		V: e.v,
+	})
+}
+
+func (e *BoolExpr) MarshalJSON() ([]byte, error) {
+	return json.Marshal(struct {
+		T string
+		V bool
+	}{
+		T: "bool",
+		V: e.v,
+	})
+}
+
+func (e *AbsExpr) MarshalJSON() ([]byte, error) {
+	return json.Marshal(struct {
+		T     string
+		Typ   Type
+		Name  string
+		Right Expr
+	}{
+		T: "abs",
+		Typ: e.typ,
+		Name: e.name,
+		Right: e.right,
+	})
+}
+
+func (e *AppExpr) MarshalJSON() ([]byte, error) {
+	return json.Marshal(struct {
+		T     string
+		Left  Expr
+		Right Expr
+	}{
+		T:     "app",
+		Left:  e.left,
+		Right: e.right,
+	})
+}
+
+func (e *VarExpr) MarshalJSON() ([]byte, error) {
+	return json.Marshal(struct {
+		T     string
+		Name string
+	}{
+		T:     "var",
+		Name: e.name,
+	})
+}
+
+func (e *BinaryExpr) MarshalJSON() ([]byte, error) {
+	return json.Marshal(struct {
+		T     string
+		Op    string
+		Left  Expr
+		Right Expr
+	}{
+		T:     "bin",
+		Op:    e.op.String(),
+		Left:  e.left,
+		Right: e.right,
+	})
+}
+
 /*
- * Most of those tests are recycled from
+ * Many of those tests are recycled from
  *	https://github.com/mbivert/nix-series-code/blob/master/lambda/parse_test.nix
  *	https://github.com/mbivert/nix-series-code/blob/master/exprs_test.nix
  *
@@ -20,9 +103,6 @@ import (
  * scalar types (eg. bool, int, float) and basic arithmetic operations.
  *
  * TODO: split bare lambda calculus & scalar expressions.
- *
- * Type indications, quantum and syntactical extensions will be tested
- * separately.
  */
 func TestParserTypeless(t *testing.T) {
 	ftests.Run(t, []ftests.Test{
@@ -977,5 +1057,61 @@ func TestParserBasicLetIn(t *testing.T) {
 				fmt.Errorf(":1:7: Expecting equal after let $x, got: int64"),
 			},
 		},
+		{
+			"let x = 42",
+			parse,
+			[]any{strings.NewReader("let x = 42"), ""},
+			[]any{
+				nil,
+				fmt.Errorf(":1:11: Expecting 'in' after let $x = $M, got EOF"),
+			},
+		},
+		{
+			"let x = 42 in",
+			parse,
+			[]any{strings.NewReader("let x = 42 in"), ""},
+			[]any{
+				nil,
+				fmt.Errorf(":1:14: Unexpected token: EOF"),
+			},
+		},
+		{
+			"let x = 42 in x",
+			parse,
+			[]any{strings.NewReader("let x = 42 in x"), ""},
+			[]any{
+				&AppExpr{expr{},
+					&AbsExpr{expr{},
+						&typ{},
+						"x",
+						&VarExpr{expr{}, "x"},
+					},
+					&IntExpr{expr{}, 42},
+				},
+				nil,
+			},
+		},
+/*
+		{
+			"let x = 42 in x + 3",
+			parse,
+			[]any{strings.NewReader("let x = 42 in x + 3"), ""},
+			[]any{
+				&AppExpr{expr{},
+					&AbsExpr{expr{},
+						&typ{},
+						"x",
+						&BinaryExpr{expr{},
+							tokenPlus,
+							&VarExpr{expr{}, "x"},
+							&IntExpr{expr{}, 3},
+						},
+					},
+					&IntExpr{expr{}, 42},
+				},
+				nil,
+			},
+		},
+*/
 	})
 }

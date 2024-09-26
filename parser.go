@@ -57,6 +57,10 @@ type typ struct{}
 func (t *typ) aType()         {}
 func (t *typ) String() string { return "" }
 
+type MissingType struct {
+	typ
+}
+
 type ArrowType struct {
 	typ
 	left, right Type
@@ -87,6 +91,10 @@ type FloatType struct {
 type VarType struct {
 	typ
 	name string
+}
+
+func (t *MissingType) String() string {
+	return "<missing>"
 }
 
 func (t *ArrowType) String() string {
@@ -244,7 +252,7 @@ func (e *AbsExpr) String() string {
 }
 
 func (e *AppExpr) String() string {
-	return fmt.Sprintf("(%s %s)", e.left, e.right)
+	return fmt.Sprintf("((%s) %s)", e.left, e.right)
 }
 
 func (e *UnaryExpr) String() string {
@@ -450,7 +458,10 @@ func (p *parser) varExpr() *VarExpr {
 	return &VarExpr{expr{}, n}
 }
 
-// NOTE: we're using 〈〉 over <> to avoid issues with things like <x, 1>3, 1>
+// NOTE: we're using 〈〉 over <> to avoid confusion with < as an operator
+// (e.g. <x, 1> will mess things up: parseBinary will expects something after
+// the 1, and not consider it the end of a product)
+//
 // TODO: cleanup
 func (p *parser) productExpr() Expr {
 	p.next()
@@ -560,12 +571,9 @@ func (p *parser) binaryExprs() Expr {
 }
 
 // XXX naming convention is confusing
-// TODO: no rec, no let <x,y,...>, no let *
+//
+// TODO: no rec, no let 〈x,y,...〉, no let *
 func (p *parser) letIn() Expr {
-	if !p.has(tokenLet) {
-		return p.binaryExprs()
-	}
-
 	p.next()
 
 	if !p.has(tokenName) {
@@ -593,19 +601,25 @@ func (p *parser) letIn() Expr {
 	// XXX meh, no typing annotation
 	return &AppExpr{expr{},
 		&AbsExpr{expr{},
-			Type(&typ{}),
+//			&MissingType{typ{}},
+			&typ{},
 			n.name,
-			x,
+			y,
 		},
-		y,
+		x,
 	}
 }
 
 func (p *parser) absExpr() Expr {
 	var n string
 
+	// TODO: hopefully this is good enough to insert it here
+	if p.has(tokenLet) {
+		return p.letIn()
+	}
+
 	if !p.has(tokenLambda) {
-		x := p.letIn()
+		x := p.binaryExprs()
 
 		// is this the short form: "x. [...]" instead of "λx. [...]"
 		// (eventually with a type annotation)
@@ -628,6 +642,7 @@ func (p *parser) absExpr() Expr {
 	}
 
 	// a type information may be supplied
+//	t := Type(&MissingType{typ{}})
 	t := Type(&typ{})
 	if p.has(tokenColon) {
 		p.next()
@@ -645,7 +660,7 @@ func (p *parser) appExpr() Expr {
 	l := p.absExpr()
 
 	// XXX too fragile?
-	for !p.has(tokenEOF) && !p.has(tokenRParen) && !p.has(tokenRBracket) && !p.has(tokenComa) {
+	for !p.has(tokenEOF) && !p.has(tokenRParen) && !p.has(tokenRBracket) && !p.has(tokenComa) && !p.has(tokenIn) {
 		r := p.absExpr()
 		l = &AppExpr{expr{}, l, r}
 	}
