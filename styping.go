@@ -129,6 +129,8 @@ func inferSType(x Expr) (Expr, error) {
 					)
 				}
 				x.setType(&BoolType{typ{}})
+			default:
+				panic("assert")
 			}
 
 			x.(*BinaryExpr).left  = l
@@ -161,13 +163,11 @@ func inferSType(x Expr) (Expr, error) {
 			l := x.(*AppExpr).left
 			r := x.(*AppExpr).right
 
-			l, err := aux(l, ctx)
-			if err != nil {
+			if l, err = aux(l, ctx); err != nil {
 				return nil, err
 			}
 
-			r, err = aux(r, ctx)
-			if err != nil {
+			if r, err = aux(r, ctx); err != nil {
 				return nil, err
 			}
 
@@ -206,6 +206,8 @@ func inferSType(x Expr) (Expr, error) {
 			x.setType(&ProductType{typ{}, l.getType(), r.getType()})
 			x.(*ProductExpr).left = l
 			x.(*ProductExpr).right = r
+		default:
+			panic("assert")
 		}
 
 		return x, nil
