@@ -5,84 +5,84 @@ type tokenKind uint
 //go:generate go run golang.org/x/tools/cmd/stringer -type tokenKind -linecomment tokenkind.go
 
 const (
-	tokenEOF tokenKind = iota // EOF
-	tokenError      // error
+	tokenEOF   tokenKind = iota // EOF
+	tokenError                  // error
 
 	// Standard stuff for an untyped λ-calculus
 	// XXX Rename tokenName tokenVar
-	tokenName       // name
-	tokenLambda     // λ
+	tokenName   // name
+	tokenLambda // λ
 
-	tokenLParen     // (
-	tokenRParen     // )
+	tokenLParen // (
+	tokenRParen // )
 
-	tokenDot        // .
+	tokenDot // .
 
-	tokenFloat      // float64
-	tokenInt        // int64
-	tokenBool       // bool
+	tokenFloat // float64
+	tokenInt   // int64
+	tokenBool  // bool
 
 	// XXX meh, potential confusion (stringers),
 	// hopefully benign.
-	tokenTBool      // bool
-	tokenTInt       // int
-	tokenTFloat     // float
-	tokenTUnit      // unit
+	tokenTBool  // bool
+	tokenTInt   // int
+	tokenTFloat // float
+	tokenTUnit  // unit
 
-	tokenExcl       // !
-	tokenPlus       // +
-	tokenMinus      // -
-	tokenStar       // *
-	tokenSlash      // /
+	tokenExcl  // !
+	tokenPlus  // +
+	tokenMinus // -
+	tokenStar  // *
+	tokenSlash // /
 
-	tokenLess       // <
-	tokenMore       // >
+	tokenLess // <
+	tokenMore // >
 
-	tokenComa       // ,
-	tokenEqual      // =
+	tokenComa  // ,
+	tokenEqual // =
 
-	tokenLBracket   // 〈
-	tokenRBracket   // 〉
+	tokenLBracket // 〈
+	tokenRBracket // 〉
 
-	tokenOr         // |
-	tokenAnd        // &
+	tokenOr  // |
+	tokenAnd // &
 
-	tokenMoreEq     // ≥
-	tokenLessEq     // ≤
+	tokenMoreEq // ≥
+	tokenLessEq // ≤
 
-	tokenFPlus      // +.
-	tokenFMinus     // -.
-	tokenFStar      // *.
-	tokenFSlash     // /.
+	tokenFPlus  // +.
+	tokenFMinus // -.
+	tokenFStar  // *.
+	tokenFSlash // /.
 
-	tokenFLess      // <.
-	tokenFMore      // >.
+	tokenFLess // <.
+	tokenFMore // >.
 
-	tokenAndAnd     // &&
-	tokenOrOr       // ||
+	tokenAndAnd // &&
+	tokenOrOr   // ||
 
-	tokenFMoreEq    // ≥.
-	tokenFLessEq    // ≤.
+	tokenFMoreEq // ≥.
+	tokenFLessEq // ≤.
 
 	// Extensions see [Selinger2009]
 	// (TODO: partial)
-	tokenColon      // :
-	tokenPi         // π
+	tokenColon // :
+	tokenPi    // π
 
-	tokenArrow      // →
-	tokenProduct    // ×
+	tokenArrow   // →
+	tokenProduct // ×
 
-	tokenLet        // let
-	tokenIn         // in
-	tokenRec        // rec
+	tokenLet // let
+	tokenIn  // in
+	tokenRec // rec
 
-	tokenMatch      // match
-	tokenWith       // with
+	tokenMatch // match
+	tokenWith  // with
 
-	tokenIf         // if
-	tokenThen       // then
-	tokenElse       // else
+	tokenIf   // if
+	tokenThen // then
+	tokenElse // else
 
-	tokenNew        // new
-	tokenMeas       // meas
+	tokenNew  // new
+	tokenMeas // meas
 )

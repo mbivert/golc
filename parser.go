@@ -299,32 +299,6 @@ func (p *parser) has(t tokenKind) bool {
 	return p.tok.kind == t
 }
 
-/*
-func mapsTo() {
-}
-
-func product() {
-}
-
-func type() {
-}
-
-func pair() {
-}
-*/
-
-/*
-
-func let() {
-}
-
-func match() {
-}
-
-etc.
-
-*/
-
 func (p *parser) PrimitiveType() Type {
 	switch k := p.tok.kind; k {
 	case tokenTBool:
@@ -486,14 +460,14 @@ func (p *parser) productExpr() Expr {
 			if *x == nil {
 				*x = &ProductExpr{expr{}, y, nil}
 
-			// second element of the pair
+				// second element of the pair
 			} else if (*x).right == nil {
 				(*x).right = y
 
-			// Third element: replace the right element of the current
-			// pair by a new product. On its left, it has the previous
-			// right element, and on its right, the element we've just
-			// parsed. x should now point to this new product.
+				// Third element: replace the right element of the current
+				// pair by a new product. On its left, it has the previous
+				// right element, and on its right, the element we've just
+				// parsed. x should now point to this new product.
 			} else {
 				z := (*x).right
 				t := &ProductExpr{expr{}, z, y}
@@ -501,7 +475,7 @@ func (p *parser) productExpr() Expr {
 				x = &t
 			}
 
-		// We're done
+			// We're done
 		} else if p.has(tokenRBracket) {
 			p.next()
 
@@ -598,11 +572,14 @@ func (p *parser) letIn() Expr {
 
 	y := p.appExpr()
 
+	t := Type(&typ{})
+
+	// Desugar now; perhaps we'd want to have a dedicated pass.
 	// XXX meh, no typing annotation
 	return &AppExpr{expr{},
 		&AbsExpr{expr{},
-//			&MissingType{typ{}},
-			&typ{},
+			//			&MissingType{typ{}},
+			t,
 			n.name,
 			y,
 		},
@@ -642,7 +619,7 @@ func (p *parser) absExpr() Expr {
 	}
 
 	// a type information may be supplied
-//	t := Type(&MissingType{typ{}})
+	//	t := Type(&MissingType{typ{}})
 	t := Type(&typ{})
 	if p.has(tokenColon) {
 		p.next()
@@ -656,11 +633,35 @@ func (p *parser) absExpr() Expr {
 	return &AbsExpr{expr{}, t, n, p.appExpr()}
 }
 
+// tokens marking the end of an application. parser.appExpr()
+// is the parsing entry point: we get back there again in a few
+// cases (parser.parenExpr(), parser.productExpr(), parser.letIn())
+// and need to detect the end of such cases.
+var endAppExpr = map[tokenKind]bool{
+	// nothing else to parse
+	tokenEOF: true,
+
+	// we were parsing something between parenthesis
+	tokenRParen: true,
+
+	// we were parsing something between brackets (product)
+	tokenRBracket: true,
+
+	// we're parsing something between brackets (product)
+	tokenComa: true,
+
+	// we just parsed the expression $expr associated to a bound
+	// name $x of a let/in construct (let $x = $expr in ...)
+	tokenIn: true,
+}
+
 func (p *parser) appExpr() Expr {
 	l := p.absExpr()
 
-	// XXX too fragile?
-	for !p.has(tokenEOF) && !p.has(tokenRParen) && !p.has(tokenRBracket) && !p.has(tokenComa) && !p.has(tokenIn) {
+	for {
+		if _, stop := endAppExpr[p.tok.kind]; stop {
+			break
+		}
 		r := p.absExpr()
 		l = &AppExpr{expr{}, l, r}
 	}

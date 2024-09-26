@@ -14,7 +14,7 @@ import (
 func (e *IntExpr) MarshalJSON() ([]byte, error) {
 	return json.Marshal(struct {
 		T string
-		V   int64
+		V int64
 	}{
 		T: "int",
 		V: e.v,
@@ -48,9 +48,9 @@ func (e *AbsExpr) MarshalJSON() ([]byte, error) {
 		Name  string
 		Right Expr
 	}{
-		T: "abs",
-		Typ: e.typ,
-		Name: e.name,
+		T:     "abs",
+		Typ:   e.typ,
+		Name:  e.name,
 		Right: e.right,
 	})
 }
@@ -69,10 +69,10 @@ func (e *AppExpr) MarshalJSON() ([]byte, error) {
 
 func (e *VarExpr) MarshalJSON() ([]byte, error) {
 	return json.Marshal(struct {
-		T     string
+		T    string
 		Name string
 	}{
-		T:     "var",
+		T:    "var",
 		Name: e.name,
 	})
 }
@@ -1086,12 +1086,11 @@ func TestParserBasicLetIn(t *testing.T) {
 						"x",
 						&VarExpr{expr{}, "x"},
 					},
-					&IntExpr{expr{}, 42},
+					&IntExpr{expr{&IntType{typ{}}}, 42},
 				},
 				nil,
 			},
 		},
-/*
 		{
 			"let x = 42 in x + 3",
 			parse,
@@ -1104,14 +1103,13 @@ func TestParserBasicLetIn(t *testing.T) {
 						&BinaryExpr{expr{},
 							tokenPlus,
 							&VarExpr{expr{}, "x"},
-							&IntExpr{expr{}, 3},
+							&IntExpr{expr{&IntType{typ{}}}, 3},
 						},
 					},
-					&IntExpr{expr{}, 42},
+					&IntExpr{expr{&IntType{typ{}}}, 42},
 				},
 				nil,
 			},
 		},
-*/
 	})
 }

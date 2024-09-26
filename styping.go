@@ -45,8 +45,8 @@ func sInferType(x Expr) (Expr, error) {
 			case tokenFMinus:
 			case tokenFPlus:
 
-			// Right must be bool
-			// case tokenExclamation:
+				// Right must be bool
+				// case tokenExclamation:
 			}
 
 		// Again, we may need to typecheck things here
@@ -136,7 +136,7 @@ func sInferType(x Expr) (Expr, error) {
 			x.setType(t)
 			return x, nil
 
-		// case *ProductExpr:
+			// case *ProductExpr:
 		}
 
 		return x, nil
