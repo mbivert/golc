@@ -19,14 +19,9 @@ func TestEvalArithmetic(t *testing.T) {
 		{
 			"Basic addition",
 			evalExpr,
-			[]any{&BinaryExpr{
-				expr{},
-				tokenPlus,
-				&IntExpr{expr{}, 3},
-				&IntExpr{expr{}, 4},
-			}},
+			[]any{mustParse("3+4")},
 			[]any{
-				&IntExpr{expr{}, 7},
+				&IntExpr{expr{&IntType{typ{}}}, 7},
 				nil,
 			},
 		},

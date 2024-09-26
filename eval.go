@@ -24,7 +24,7 @@ func evalUnaryExpr(x *UnaryExpr) (Expr, error) {
 		if !ok {
 			panic("oooo")
 		}
-		return &IntExpr{expr{}, int64Ops[x.op](ir.v)}, nil
+		return &IntExpr{expr{&IntType{typ{}}}, int64Ops[x.op](ir.v)}, nil
 
 	case tokenFPlus:
 		fallthrough
@@ -33,7 +33,7 @@ func evalUnaryExpr(x *UnaryExpr) (Expr, error) {
 		if !ok {
 			panic("oooo")
 		}
-		return &FloatExpr{expr{}, float64Ops[x.op](ir.v)}, nil
+		return &FloatExpr{expr{&FloatType{typ{}}}, float64Ops[x.op](ir.v)}, nil
 	default:
 		panic("Unexpected unary operator " + x.op.String())
 	}
@@ -104,7 +104,7 @@ func evalBinaryExpr(x *BinaryExpr) (Expr, error) {
 		if !ok {
 			panic("oooo")
 		}
-		return &IntExpr{expr{}, int64Ops[x.op](il.v, ir.v)}, nil
+		return &IntExpr{expr{&IntType{typ{}}}, int64Ops[x.op](il.v, ir.v)}, nil
 
 	case tokenFPlus:
 		fallthrough
@@ -124,7 +124,7 @@ func evalBinaryExpr(x *BinaryExpr) (Expr, error) {
 		if !ok {
 			panic("oooo")
 		}
-		return &FloatExpr{expr{}, float64Ops[x.op](il.v, ir.v)}, nil
+		return &FloatExpr{expr{&FloatType{typ{}}}, float64Ops[x.op](il.v, ir.v)}, nil
 
 	default:
 		panic("TODO")

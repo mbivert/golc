@@ -1,5 +1,7 @@
 package main
 
+// TODO: parser method naming conventions are irregular
+
 import (
 	"fmt"
 	"io"
@@ -187,7 +189,8 @@ type BoolExpr struct {
 
 type VarExpr struct {
 	expr
-	name string
+	name  string
+	// fresh bool
 }
 
 type AbsExpr struct {
@@ -617,6 +620,7 @@ func (p *parser) absExpr() Expr {
 		p.errf("Expecting dot after lambda variable name, got: %s", p.tok.kind.String())
 	}
 	p.next()
+
 	return &AbsExpr{expr{}, t, n, p.appExpr()}
 }
 
@@ -681,7 +685,7 @@ func parse(in io.Reader, fn string) (Expr, error) {
 	return e, err
 }
 
-// For eval_test.go and utils_test.go so far.
+// To ease tests so far
 func mustParse(s string) Expr {
 	e, err := parse(strings.NewReader(s), "")
 	if err != nil {

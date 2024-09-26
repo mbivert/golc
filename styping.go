@@ -21,10 +21,12 @@ type Ctx map[string]Type
 //
 // We modify (and return) the expression in place
 // so that it contains the relevant typing data.
-func sInferType(x Expr) (Expr, error) {
+func inferSType(x Expr) (Expr, error) {
 	var aux func(Expr, Ctx) (Expr, error)
 
 	aux = func(x Expr, ctx Ctx) (Expr, error) {
+		var err error
+
 		switch x.(type) {
 
 		// Those four cases have already been typed
@@ -51,31 +53,86 @@ func sInferType(x Expr) (Expr, error) {
 
 		// Again, we may need to typecheck things here
 		case *BinaryExpr:
+			l := x.(*BinaryExpr).left
+			r := x.(*BinaryExpr).right
+
+			if l, err = aux(l, ctx); err != nil {
+				return nil, err
+			}
+			if r, err = aux(r, ctx); err != nil {
+				return nil, err
+			}
+
+			// NOTE/TODO: maybe generics can help here
+			// (quick test yields an issue with the setType(T{typ{}}))
+
 			switch x.(*BinaryExpr).op {
 			// Left right must be ints
 			case tokenMinus:
+				fallthrough
 			case tokenPlus:
+				fallthrough
 			case tokenStar:
+				fallthrough
 			case tokenSlash:
+				fallthrough
 			case tokenLessEq:
+				fallthrough
 			case tokenMoreEq:
+				fallthrough
 			case tokenLess:
+				fallthrough
 			case tokenMore:
+				_, lok := l.getType().(*IntType)
+				_, rok := r.getType().(*IntType)
+				if !lok || ! rok {
+					return nil, fmt.Errorf("%s : (int×int) → int; got (%s×%s)",
+						x.(*BinaryExpr).op, l.getType(), r.getType(),
+					)
+				}
+				x.setType(&IntType{typ{}})
 
 			// Left right must be floats
 			case tokenFMinus:
+				fallthrough
 			case tokenFPlus:
+				fallthrough
 			case tokenFStar:
+				fallthrough
 			case tokenFSlash:
+				fallthrough
 			case tokenFLessEq:
+				fallthrough
 			case tokenFMoreEq:
+				fallthrough
 			case tokenFLess:
+				fallthrough
 			case tokenFMore:
+				_, lok := l.getType().(*FloatType)
+				_, rok := r.getType().(*FloatType)
+				if !lok || ! rok {
+					return nil, fmt.Errorf("%s : (float×float) → float; got (%s×%s)",
+						x.(*BinaryExpr).op, l.getType(), r.getType(),
+					)
+				}
+				x.setType(&FloatType{typ{}})
 
 			// Left/right must be bools
 			case tokenOrOr:
+				fallthrough
 			case tokenAndAnd:
+				_, lok := l.getType().(*BoolType)
+				_, rok := r.getType().(*BoolType)
+				if !lok || ! rok {
+					return nil, fmt.Errorf("%s : (bool×bool) → bool; got (%s×%s)",
+						x.(*BinaryExpr).op, l.getType(), r.getType(),
+					)
+				}
+				x.setType(&BoolType{typ{}})
 			}
+
+			x.(*BinaryExpr).left  = l
+			x.(*BinaryExpr).right = r
 
 		case *AbsExpr:
 			n := x.(*AbsExpr).name
@@ -88,8 +145,7 @@ func sInferType(x Expr) (Expr, error) {
 			// new var in env
 			ctx[n] = t
 
-			r, err := aux(r, ctx)
-			if err != nil {
+			if r, err = aux(r, ctx); err != nil {
 				return nil, err
 			}
 			x.setType(&ArrowType{typ{}, t, r.getType()})
@@ -136,11 +192,33 @@ func sInferType(x Expr) (Expr, error) {
 			x.setType(t)
 			return x, nil
 
-			// case *ProductExpr:
+		case *ProductExpr:
+			l := x.(*ProductExpr).left
+			r := x.(*ProductExpr).right
+
+			if l, err = aux(l, ctx); err != nil {
+				return nil, err
+			}
+			if r, err = aux(r, ctx); err != nil {
+				return nil, err
+			}
+
+			x.setType(&ProductType{typ{}, l.getType(), r.getType()})
+			x.(*ProductExpr).left = l
+			x.(*ProductExpr).right = r
 		}
 
 		return x, nil
 	}
 
 	return aux(x, Ctx{})
+}
+
+// To ease tests so far
+func mustSType(x Expr) Expr {
+	y, err := inferSType(x)
+	if err != nil {
+		panic(err)
+	}
+	return y
 }
