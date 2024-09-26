@@ -435,8 +435,6 @@ func (p *parser) varExpr() *VarExpr {
 // NOTE: we're using 〈〉 over <> to avoid confusion with < as an operator
 // (e.g. <x, 1> will mess things up: parseBinary will expects something after
 // the 1, and not consider it the end of a product)
-//
-// TODO: cleanup
 func (p *parser) productExpr() Expr {
 	p.next()
 
@@ -447,46 +445,35 @@ func (p *parser) productExpr() Expr {
 	for {
 		y := p.appExpr()
 
+		hasComa := p.has(tokenComa)
+		hasRBracket := p.has(tokenRBracket)
+
 		// <Y> parsed as Y
-		if p.has(tokenRBracket) && *x == nil {
+		if hasRBracket && *x == nil {
 			p.next()
 			return y
 		}
 
-		if p.has(tokenComa) {
+		// first element of a pair
+		if hasComa && *x == nil {
 			p.next()
+			*x = &ProductExpr{expr{}, y, nil}
+			continue
+		}
 
-			// first element of the pair
-			if *x == nil {
-				*x = &ProductExpr{expr{}, y, nil}
-
-				// second element of the pair
-			} else if (*x).right == nil {
+		if hasComa || hasRBracket {
+			p.next()
+			if (*x).right == nil {
 				(*x).right = y
-
-				// Third element: replace the right element of the current
-				// pair by a new product. On its left, it has the previous
-				// right element, and on its right, the element we've just
-				// parsed. x should now point to this new product.
 			} else {
 				z := (*x).right
 				t := &ProductExpr{expr{}, z, y}
 				(*x).right = t
 				x = &t
 			}
+		}
 
-			// We're done
-		} else if p.has(tokenRBracket) {
-			p.next()
-
-			if (*x).right != nil {
-				z := (*x).right
-				t := &ProductExpr{expr{}, z, y}
-				(*x).right = t
-				x = &t
-			} else {
-				(*x).right = y
-			}
+		if hasRBracket {
 			return ret
 		}
 	}
