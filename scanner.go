@@ -1,5 +1,6 @@
 /*
  * Scanner/lexer, modelled after Go's.
+ * (https://github.com/golang/go/blob/master/src/go/scanner/scanner.go)
  */
 package main
 
@@ -117,18 +118,6 @@ func (s *scanner) peek() byte {
 		return s.src[s.nextOff]
 	}
 	return 0
-}
-
-func (s *scanner) peek2() (byte, byte) {
-	var b0, b1 byte
-
-	if s.nextOff < len(s.src) {
-		b0 = s.src[s.nextOff]
-	}
-	if s.nextOff+1 < len(s.src) {
-		b1 = s.src[s.nextOff+1]
-	}
-	return b0, b1
 }
 
 // skip whitespaces
@@ -277,6 +266,7 @@ func (s *scanner) scan() token {
 		case '/':
 			kind = s.switch2(tokenSlash, '.', tokenFSlash)
 
+		// TODO: make sure all those are tested
 		case '<':
 			kind = s.switch4(
 				tokenLess,    // <
@@ -348,7 +338,7 @@ func (s *scanner) scanAll() ([]token, error) {
 	}
 }
 
-// grab next token
+// slurp all tokens
 func scanAll(src string, fn string) ([]token, error) {
 	var s scanner
 	s.init([]byte(src), fn)
