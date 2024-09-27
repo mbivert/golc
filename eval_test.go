@@ -55,12 +55,69 @@ func TestEvalArithmetic(t *testing.T) {
 	})
 }
 
+// Some of those aren't (yet?) properly typed
 func TestEvalRenameExpr(t *testing.T) {
 	ftests.Run(t, []ftests.Test{
 		{
-			"(2<3) && !(true) && 3. ≤. 5. (no changes expected)",
+			"z | y, x",
 			renameExpr,
-			[]any{mustSTypeParse("(2<3) && !(true) && (3. ≤. 5.)"), "x", "y"},
+			[]any{mustParse("z"), "y", "x"},
+			[]any{
+				mustParse("z"),
+			},
+		},
+		{
+			"x | y, x",
+			renameExpr,
+			[]any{mustParse("x"), "y", "x"},
+			[]any{
+				mustParse("y"),
+			},
+		},
+		{
+			"(x y) (y x z)  | y, x",
+			renameExpr,
+			[]any{mustParse("(x y) (y x z)"), "y", "x"},
+			[]any{
+				mustParse("(y y) (y y z) "),
+			},
+		},
+		{
+			"λx. x z  | y, x",
+			renameExpr,
+			[]any{mustParse("λx. x z"), "y", "x"},
+			[]any{
+				mustParse("λy. y z"),
+			},
+		},
+		{
+			"λx. x z  | y, y",
+			renameExpr,
+			[]any{mustParse("λx. x z"), "y", "y"},
+			[]any{
+				mustParse("λx. x z"),
+			},
+		},
+		{
+			"λx. λy. y z foo bar  | z, x",
+			renameExpr,
+			[]any{mustParse("λx. λy. y z foo bar"), "z", "x"},
+			[]any{
+				mustParse("λz. λy. y z foo bar"),
+			},
+		},
+		{
+			"λx. λy. y z foo bar  | foo, y",
+			renameExpr,
+			[]any{mustParse("λx. λy. y z foo bar"), "foo", "y"},
+			[]any{
+				mustParse("λx. λfoo. foo z foo bar"),
+			},
+		},
+		{
+			"(2<3) && !(true) && 3. ≤. 5. (no changes expected) | y, x",
+			renameExpr,
+			[]any{mustSTypeParse("(2<3) && !(true) && (3. ≤. 5.)"), "y", "x"},
 			[]any{
 				mustSTypeParse("(2<3) && !(true) && (3. ≤. 5.)"),
 			},
@@ -69,7 +126,7 @@ func TestEvalRenameExpr(t *testing.T) {
 		// instead of mustSTypeParse().
 		// TODO: there are plans to allow it, as x's type can be infered.
 		{
-			"(2<3) && !(true) && 3. ≤. x",
+			"(2<3) && !(true) && 3. ≤. x | y, x",
 			renameExpr,
 			[]any{mustParse("(2<3) && !(true) && 3. ≤. x"), "y", "x"},
 			[]any{
