@@ -2,7 +2,6 @@ package main
 
 import (
 	"encoding/json"
-	"strings"
 	"testing"
 
 	"github.com/mbivert/ftests"
@@ -28,19 +27,19 @@ func TestScannerScanAll(t *testing.T) {
 		{
 			"empty input",
 			scanAll,
-			[]any{strings.NewReader(""), ""},
+			[]any{"", ""},
 			[]any{[]token{token{tokenEOF, 1, 1, ""}}, nil},
 		},
 		{
 			"spaces",
 			scanAll,
-			[]any{strings.NewReader("  \t\t\r\n"), ""},
+			[]any{"  \t\t\r\n", ""},
 			[]any{[]token{token{tokenEOF, 2, 1, ""}}, nil},
 		},
 		{
 			"single byte tokens",
 			scanAll,
-			[]any{strings.NewReader("  \t\t\r\n().  :<× >"), ""},
+			[]any{"  \t\t\r\n().  :<× >", ""},
 			[]any{[]token{
 				token{tokenLParen, 2, 1, "("},
 				token{tokenRParen, 2, 2, ")"},
@@ -55,7 +54,7 @@ func TestScannerScanAll(t *testing.T) {
 		{
 			"multi-bytes words",
 			scanAll,
-			[]any{strings.NewReader("hello world"), ""},
+			[]any{"hello world", ""},
 			[]any{[]token{
 				token{tokenName, 1, 1, "hello"},
 				token{tokenName, 1, 7, "world"},
@@ -65,7 +64,7 @@ func TestScannerScanAll(t *testing.T) {
 		{
 			"ifelse",
 			scanAll,
-			[]any{strings.NewReader("\n(λp. λx. λy. p x y)"), ""},
+			[]any{"\n(λp. λx. λy. p x y)", ""},
 			[]any{[]token{
 				token{tokenLParen, 2, 1, "("},
 				token{tokenLambda, 2, 2, "λ"},
@@ -91,7 +90,7 @@ func TestScannerScanAll(t *testing.T) {
 		{
 			"arrow",
 			scanAll,
-			[]any{strings.NewReader("(λp:bool -> bool . M)"), ""},
+			[]any{"(λp:bool -> bool . M)", ""},
 			[]any{[]token{
 				token{tokenLParen, 1, 1, "("},
 				token{tokenLambda, 1, 2, "λ"},
@@ -109,7 +108,7 @@ func TestScannerScanAll(t *testing.T) {
 		{
 			"arrow (bis)",
 			scanAll,
-			[]any{strings.NewReader("(λp:bool->  bool . M)"), ""},
+			[]any{"(λp:bool->  bool . M)", ""},
 			[]any{[]token{
 				token{tokenLParen, 1, 1, "("},
 				token{tokenLambda, 1, 2, "λ"},
@@ -127,7 +126,7 @@ func TestScannerScanAll(t *testing.T) {
 		{
 			"arrow (bis)",
 			scanAll,
-			[]any{strings.NewReader("(λp:bool →  bool→. M)"), ""},
+			[]any{"(λp:bool →  bool→. M)", ""},
 			[]any{[]token{
 				token{tokenLParen, 1, 1, "("},
 				token{tokenLambda, 1, 2, "λ"},
@@ -146,7 +145,7 @@ func TestScannerScanAll(t *testing.T) {
 		{
 			"isolated integer",
 			scanAll,
-			[]any{strings.NewReader("0123"), ""},
+			[]any{"0123", ""},
 			[]any{[]token{
 				token{tokenInt, 1, 1, "0123"},
 				token{tokenEOF, 1, 5, ""},
@@ -155,7 +154,7 @@ func TestScannerScanAll(t *testing.T) {
 		{
 			"allow unusual number parsing terminator",
 			scanAll,
-			[]any{strings.NewReader("0123aaa"), ""},
+			[]any{"0123aaa", ""},
 			[]any{[]token{
 				token{tokenInt, 1, 1, "0123"},
 				token{tokenName, 1, 5, "aaa"},
@@ -165,20 +164,20 @@ func TestScannerScanAll(t *testing.T) {
 		{
 			"numbers",
 			scanAll,
-			[]any{strings.NewReader("0123 123 123.46 .10 ."), ""},
+			[]any{"0123 123 123.46 .10 .", ""},
 			[]any{[]token{
 				token{tokenInt, 1, 1, "0123"},
 				token{tokenInt, 1, 6, "123"},
 				token{tokenFloat, 1, 10, "123.46"},
-				token{tokenFloat, 1, 16, ".10"},
-				token{tokenDot, 1, 19, "."},
-				token{tokenEOF, 1, 20, ""},
+				token{tokenFloat, 1, 17, ".10"},
+				token{tokenDot, 1, 21, "."},
+				token{tokenEOF, 1, 22, ""},
 			}, nil},
 		},
 		{
 			"two-bytes operators, slashes",
 			scanAll,
-			[]any{strings.NewReader("+. + . //."), ""},
+			[]any{"+. + . //.", ""},
 			[]any{[]token{
 				token{tokenFPlus, 1, 1, "+."},
 				token{tokenPlus, 1, 4, "+"},
@@ -191,7 +190,7 @@ func TestScannerScanAll(t *testing.T) {
 		{
 			"multi-byte known tokens",
 			scanAll,
-			[]any{strings.NewReader("false let truer\ttrue"), ""},
+			[]any{"false let truer\ttrue", ""},
 			[]any{[]token{
 				token{tokenBool, 1, 1, "false"},
 				token{tokenLet, 1, 7, "let"},
@@ -203,7 +202,7 @@ func TestScannerScanAll(t *testing.T) {
 		{
 			"'twos' are reckognized as a separator (was a bug)",
 			scanAll,
-			[]any{strings.NewReader("foo||bar&&"), ""},
+			[]any{"foo||bar&&", ""},
 			[]any{[]token{
 				token{tokenName, 1, 1, "foo"},
 				token{tokenOrOr, 1, 4, "||"},
@@ -220,7 +219,7 @@ func TestScannerProduct(t *testing.T) {
 		{
 			"〈〉",
 			scanAll,
-			[]any{strings.NewReader("〈〉"), ""},
+			[]any{"〈〉", ""},
 			[]any{[]token{
 				token{tokenLBracket, 1, 1, "〈"},
 				token{tokenRBracket, 1, 2, "〉"},
@@ -230,7 +229,7 @@ func TestScannerProduct(t *testing.T) {
 		{
 			"〈X〉",
 			scanAll,
-			[]any{strings.NewReader("〈X〉"), ""},
+			[]any{"〈X〉", ""},
 			[]any{[]token{
 				token{tokenLBracket, 1, 1, "〈"},
 				token{tokenName, 1, 2, "X"},
@@ -241,7 +240,7 @@ func TestScannerProduct(t *testing.T) {
 		{
 			"〈X,   Y〉",
 			scanAll,
-			[]any{strings.NewReader("〈X,   Y〉"), ""},
+			[]any{"〈X,   Y〉", ""},
 			[]any{[]token{
 				token{tokenLBracket, 1, 1, "〈"},
 				token{tokenName, 1, 2, "X"},
@@ -259,11 +258,37 @@ func TestScannerExcl(t *testing.T) {
 		{
 			"!true",
 			scanAll,
-			[]any{strings.NewReader("!true"), ""},
+			[]any{"!true", ""},
 			[]any{[]token{
 				token{tokenExcl, 1, 1, "!"},
 				token{tokenBool, 1, 2, "true"},
 				token{tokenEOF, 1, 6, ""},
+			}, nil},
+		},
+	})
+}
+
+func TestScannerFCmpOp(t *testing.T) {
+	ftests.Run(t, []ftests.Test{
+		{
+			"3.≤.5.",
+			scanAll,
+			[]any{"3.≤.5.", ""},
+			[]any{[]token{
+				token{tokenFloat, 1, 1, "3."},
+				token{tokenFLessEq, 1, 3, "≤."},
+				token{tokenFloat, 1, 5, "5."},
+				token{tokenEOF, 1, 7, ""},
+			}, nil},
+		},
+		{
+			"≤x",
+			scanAll,
+			[]any{"≤x", ""},
+			[]any{[]token{
+				token{tokenLessEq, 1, 1, "≤"},
+				token{tokenName, 1, 2, "x"},
+				token{tokenEOF, 1, 3, ""},
 			}, nil},
 		},
 	})

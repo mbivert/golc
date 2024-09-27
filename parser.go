@@ -4,8 +4,6 @@ package main
 
 import (
 	"fmt"
-	"io"
-	"strings"
 	"unicode"
 )
 
@@ -189,7 +187,7 @@ type BoolExpr struct {
 
 type VarExpr struct {
 	expr
-	name  string
+	name string
 	// fresh bool
 }
 
@@ -272,6 +270,7 @@ func (e *ProductExpr) String() string {
 
 type parser struct {
 	scanner
+	tok token
 	errf func(string, ...interface{})
 }
 
@@ -281,18 +280,15 @@ func (p *parser) errHeref(m string, args ...interface{}) error {
 		fmt.Sprintf(m, args...))
 }
 
-func (p *parser) init(in io.Reader, fn string) {
-	p.scanner.init(in, fn)
+func (p *parser) init(src string, fn string) {
+	p.scanner.init([]byte(src), fn)
 	p.errf = func(m string, args ...interface{}) {
 		panic(p.errHeref(m, args...))
 	}
 }
 
 func (p *parser) next() token {
-	// XXX refine/clarify
-	if !p.scanner.next() && p.scan.Err() != nil {
-		panic(p.scan.Err())
-	}
+	p.tok = p.scanner.scan()
 	return p.tok
 }
 
@@ -674,9 +670,9 @@ func (p *parser) parse() (e Expr, err error) {
 	return e, err
 }
 
-func parse(in io.Reader, fn string) (Expr, error) {
+func parse(src string, fn string) (Expr, error) {
 	var p parser
-	p.init(in, fn)
+	p.init(src, fn)
 	e, err := p.parse()
 	// remaining input is unexpected
 	if err == nil && !p.has(tokenEOF) {
@@ -686,8 +682,8 @@ func parse(in io.Reader, fn string) (Expr, error) {
 }
 
 // To ease tests so far
-func mustParse(s string) Expr {
-	e, err := parse(strings.NewReader(s), "")
+func mustParse(src string) Expr {
+	e, err := parse(src, "")
 	if err != nil {
 		panic(err)
 	}

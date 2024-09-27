@@ -29,14 +29,23 @@ const (
 	tokenTFloat // float
 	tokenTUnit  // unit
 
-	tokenExcl  // !
-	tokenPlus  // +
-	tokenMinus // -
-	tokenStar  // *
-	tokenSlash // /
+	tokenExcl // !
 
-	tokenLess // <
-	tokenMore // >
+	tokenPlus  // +
+	tokenFPlus // +.
+
+	tokenMinus  // -
+	tokenFMinus // -.
+
+	tokenStar   // *
+	tokenFStar  // *.
+	tokenSlash  // /
+	tokenFSlash // /.
+
+	tokenLess  // <
+	tokenFLess // <.
+	tokenMore  // >
+	tokenFMore // >.
 
 	tokenComa  // ,
 	tokenEqual // =
@@ -44,28 +53,16 @@ const (
 	tokenLBracket // 〈
 	tokenRBracket // 〉
 
-	tokenOr  // |
-	tokenAnd // &
-
-	tokenMoreEq // ≥
-	tokenLessEq // ≤
-
-	tokenFPlus  // +.
-	tokenFMinus // -.
-	tokenFStar  // *.
-	tokenFSlash // /.
-
-	tokenFLess // <.
-	tokenFMore // >.
-
-	tokenAndAnd // &&
+	tokenOr     // |
 	tokenOrOr   // ||
+	tokenAnd    // &
+	tokenAndAnd // &&
 
+	tokenMoreEq  // ≥
 	tokenFMoreEq // ≥.
+	tokenLessEq  // ≤
 	tokenFLessEq // ≤.
 
-	// Extensions see [Selinger2009]
-	// (TODO: partial)
 	tokenColon // :
 	tokenPi    // π
 

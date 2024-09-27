@@ -54,3 +54,16 @@ func TestEvalArithmetic(t *testing.T) {
 		},
 	})
 }
+
+func TestEvalRenameExpr(t *testing.T) {
+	ftests.Run(t, []ftests.Test{
+		{
+			"(2<3) && !(true) && 3. ≤. 5. (no changes expected)",
+			renameExpr,
+			[]any{mustSTypeParse("(2<3) && !(true) && (3. ≤. 5.)"), "x", "y"},
+			[]any{
+				mustSTypeParse("(2<3) && !(true) && (3. ≤. 5.)"),
+			},
+		},
+	})
+}

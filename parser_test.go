@@ -3,7 +3,6 @@ package main
 import (
 	"encoding/json"
 	"fmt"
-	"strings"
 	"testing"
 
 	"github.com/mbivert/ftests"
@@ -91,6 +90,18 @@ func (e *BinaryExpr) MarshalJSON() ([]byte, error) {
 	})
 }
 
+func (e *UnaryExpr) MarshalJSON() ([]byte, error) {
+	return json.Marshal(struct {
+		T     string
+		Op    string
+		Right Expr
+	}{
+		T:     "una",
+		Op:    e.op.String(),
+		Right: e.right,
+	})
+}
+
 /*
  * Many of those tests are recycled from
  *	https://github.com/mbivert/nix-series-code/blob/master/lambda/parse_test.nix
@@ -108,50 +119,50 @@ func TestParserMathExprs(t *testing.T) {
 		{
 			"empty input",
 			parse,
-			[]any{strings.NewReader(""), ""},
+			[]any{"", ""},
 			[]any{nil, fmt.Errorf(":1:1: Unexpected token: EOF")},
 		},
 		{
 			"single int",
 			parse,
-			[]any{strings.NewReader("  1234"), ""},
+			[]any{"  1234", ""},
 			[]any{&IntExpr{expr{&IntType{}}, 1234}, nil},
 		},
 		{
 			"single (int)",
 			parse,
-			[]any{strings.NewReader("  (1234)"), ""},
+			[]any{"  (1234)", ""},
 			[]any{&IntExpr{expr{&IntType{}}, 1234}, nil},
 		},
 		{
 			"single ((int))",
 			parse,
-			[]any{strings.NewReader("  ((1234))"), ""},
+			[]any{"  ((1234))", ""},
 			[]any{&IntExpr{expr{&IntType{}}, 1234}, nil},
 		},
 		{
 			"single float",
 			parse,
-			[]any{strings.NewReader("  1234.45 "), ""},
+			[]any{"  1234.45 ", ""},
 			[]any{&FloatExpr{expr{&FloatType{}}, 1234.45}, nil},
 		},
 		{
 			"single boolean",
 			parse,
-			[]any{strings.NewReader("  true "), ""},
+			[]any{"  true ", ""},
 			[]any{&BoolExpr{expr{&BoolType{}}, true}, nil},
 		},
 		{
 			"single boolean (bis)",
 			parse,
-			[]any{strings.NewReader("  false "), ""},
+			[]any{"  false ", ""},
 			[]any{&BoolExpr{expr{&BoolType{}}, false}, nil},
 		},
 		// NOTE: this will be rejected during the type inference/checking phase
 		{
 			"two consecutives ints: 'bad' function call, still parses OK",
 			parse,
-			[]any{strings.NewReader("  1234 12"), ""},
+			[]any{"  1234 12", ""},
 			[]any{
 				&AppExpr{expr{}, &IntExpr{expr{&IntType{}}, 1234}, &IntExpr{expr{&IntType{}}, 12}},
 				nil,
@@ -160,7 +171,7 @@ func TestParserMathExprs(t *testing.T) {
 		{
 			"unary expression: -12",
 			parse,
-			[]any{strings.NewReader("  - 12"), ""},
+			[]any{"  - 12", ""},
 			[]any{
 				&UnaryExpr{expr{}, tokenMinus, &IntExpr{expr{&IntType{}}, 12}},
 				nil,
@@ -169,7 +180,7 @@ func TestParserMathExprs(t *testing.T) {
 		{
 			"unary expression: +.12",
 			parse,
-			[]any{strings.NewReader("  +. 12"), ""},
+			[]any{"  +. 12", ""},
 			[]any{
 				&UnaryExpr{expr{}, tokenFPlus, &IntExpr{expr{&IntType{}}, 12}},
 				nil,
@@ -178,7 +189,7 @@ func TestParserMathExprs(t *testing.T) {
 		{
 			"unary expressions: ++.12",
 			parse,
-			[]any{strings.NewReader("  ++. 12"), ""},
+			[]any{"  ++. 12", ""},
 			[]any{
 				&UnaryExpr{
 					expr{},
@@ -191,28 +202,28 @@ func TestParserMathExprs(t *testing.T) {
 		{
 			"single float in parentheses",
 			parse,
-			[]any{strings.NewReader("  (1234.45) "), ""},
+			[]any{"  (1234.45) ", ""},
 			[]any{&FloatExpr{expr{&FloatType{}}, 1234.45}, nil},
 		},
 		{
 			"single float in two pairs of parentheses",
 			parse,
-			[]any{strings.NewReader("  (  (1234.45)\t) "), ""},
+			[]any{"  (  (1234.45)\t) ", ""},
 			[]any{&FloatExpr{expr{&FloatType{}}, 1234.45}, nil},
 		},
 		{
 			"Missing parenthesis",
 			parse,
-			[]any{strings.NewReader("  (  (1234.45)\t "), ""},
+			[]any{"  (  (1234.45)\t ", ""},
 			[]any{
 				nil,
-				fmt.Errorf(":1:16: Expecting left paren, got: EOF"),
+				fmt.Errorf(":1:17: Expecting left paren, got: EOF"),
 			},
 		},
 		{
 			"single float in two pairs of parentheses, many unary operators",
 			parse,
-			[]any{strings.NewReader("  +.(  -  (-.-1234.45)\t) "), ""},
+			[]any{"  +.(  -  (-.-1234.45)\t) ", ""},
 			[]any{
 				&UnaryExpr{
 					expr{},
@@ -237,7 +248,7 @@ func TestParserMathExprs(t *testing.T) {
 		{
 			"left-associativy, addition",
 			parse,
-			[]any{strings.NewReader("1+2+ 3 "), ""},
+			[]any{"1+2+ 3 ", ""},
 			[]any{
 				&BinaryExpr{
 					expr{},
@@ -256,7 +267,7 @@ func TestParserMathExprs(t *testing.T) {
 		{
 			"left-associativy, addition/substraction: 1-42+12 ≠ 1-(42+12)",
 			parse,
-			[]any{strings.NewReader("1-42+12"), ""},
+			[]any{"1-42+12", ""},
 			[]any{
 				&BinaryExpr{
 					expr{},
@@ -275,7 +286,7 @@ func TestParserMathExprs(t *testing.T) {
 		{
 			"multiplication has precedence over addition",
 			parse,
-			[]any{strings.NewReader("1.*.2.+. 3. "), ""},
+			[]any{"1.*.2.+. 3. ", ""},
 			[]any{
 				&BinaryExpr{
 					expr{},
@@ -294,7 +305,7 @@ func TestParserMathExprs(t *testing.T) {
 		{
 			"random expression",
 			parse,
-			[]any{strings.NewReader("1.*.(2.+. 3.)"), ""},
+			[]any{"1.*.(2.+. 3.)", ""},
 			[]any{
 				&BinaryExpr{
 					expr{},
@@ -313,7 +324,7 @@ func TestParserMathExprs(t *testing.T) {
 		{
 			"Comparison: x < 3",
 			parse,
-			[]any{strings.NewReader("x < 3"), ""},
+			[]any{"x < 3", ""},
 			[]any{
 				&BinaryExpr{
 					expr{},
@@ -327,7 +338,7 @@ func TestParserMathExprs(t *testing.T) {
 		{
 			"Comparison: x < (3+67)",
 			parse,
-			[]any{strings.NewReader("x < (3 +67)"), ""},
+			[]any{"x < (3 +67)", ""},
 			[]any{
 				&BinaryExpr{
 					expr{},
@@ -346,7 +357,7 @@ func TestParserMathExprs(t *testing.T) {
 		{
 			"1- 3 * 5 + (1 + 34  )/ 3.",
 			parse,
-			[]any{strings.NewReader("1- 3 * 5 + (1 + 34  )/ 3."), ""},
+			[]any{"1- 3 * 5 + (1 + 34  )/ 3.", ""},
 			[]any{
 				&BinaryExpr{
 					expr{},
@@ -380,7 +391,7 @@ func TestParserMathExprs(t *testing.T) {
 		{
 			"0	/ 78 * 12",
 			parse,
-			[]any{strings.NewReader("0	/ 78 * 12"), ""},
+			[]any{"0	/ 78 * 12", ""},
 			[]any{
 				&BinaryExpr{
 					expr{},
@@ -399,12 +410,26 @@ func TestParserMathExprs(t *testing.T) {
 		{
 			"!(true)",
 			parse,
-			[]any{strings.NewReader("!(true)"), ""},
+			[]any{"!(true)", ""},
 			[]any{
 				&UnaryExpr{
 					expr{},
 					tokenExcl,
 					&BoolExpr{expr{&BoolType{typ{}}}, true},
+				},
+				nil,
+			},
+		},
+		{
+			"3. ≤. 5.",
+			parse,
+			[]any{"3. ≤. 5.", ""},
+			[]any{
+				&BinaryExpr{
+					expr{},
+					tokenFLessEq,
+					&FloatExpr{expr{&FloatType{}}, 3.},
+					&FloatExpr{expr{&FloatType{}}, 5.},
 				},
 				nil,
 			},
@@ -417,7 +442,7 @@ func TestParserUntypedλCalc(t *testing.T) {
 		{
 			"basic abstraction",
 			parse,
-			[]any{strings.NewReader("λx.x"), ""},
+			[]any{"λx.x", ""},
 			[]any{
 				&AbsExpr{
 					expr{},
@@ -431,7 +456,7 @@ func TestParserUntypedλCalc(t *testing.T) {
 		{
 			"basic abstraction (optional λ)",
 			parse,
-			[]any{strings.NewReader("x.x"), ""},
+			[]any{"x.x", ""},
 			[]any{
 				&AbsExpr{
 					expr{},
@@ -445,7 +470,7 @@ func TestParserUntypedλCalc(t *testing.T) {
 		{
 			"abstraction: syntax error (missing dot)",
 			parse,
-			[]any{strings.NewReader("\nλx x"), ""},
+			[]any{"\nλx x", ""},
 			[]any{
 				nil,
 				fmt.Errorf(":2:4: Expecting dot after lambda variable name, got: name"),
@@ -454,7 +479,7 @@ func TestParserUntypedλCalc(t *testing.T) {
 		{
 			"abstraction: syntax error (missing variable name)",
 			parse,
-			[]any{strings.NewReader("\nλ.x x"), ""},
+			[]any{"\nλ.x x", ""},
 			[]any{
 				nil,
 				fmt.Errorf(":2:2: Expecting variable name after lambda, got: ."),
@@ -463,7 +488,7 @@ func TestParserUntypedλCalc(t *testing.T) {
 		{
 			"abstraction: syntax error (missing variable name)",
 			parse,
-			[]any{strings.NewReader("λx. "), ""},
+			[]any{"λx. ", ""},
 			[]any{
 				nil,
 				fmt.Errorf(":1:5: Unexpected token: EOF"),
@@ -472,7 +497,7 @@ func TestParserUntypedλCalc(t *testing.T) {
 		{
 			"(λx. x x) (λx. x x)",
 			parse,
-			[]any{strings.NewReader("(λx. x x) (λx. x x)"), ""},
+			[]any{"(λx. x x) (λx. x x)", ""},
 			[]any{
 				&AppExpr{
 					expr{},
@@ -503,25 +528,25 @@ func TestParserUntypedλCalc(t *testing.T) {
 		{
 			"(λx. (λy. x))",
 			parse,
-			[]any{strings.NewReader("(λx. (λy. x))"), ""},
+			[]any{"(λx. (λy. x))", ""},
 			[]any{T, nil},
 		},
 		{
 			"(λx. λy. x)",
 			parse,
-			[]any{strings.NewReader("(λx. λy. x)"), ""},
+			[]any{"(λx. λy. x)", ""},
 			[]any{T, nil},
 		},
 		{
 			"λx.λy.x",
 			parse,
-			[]any{strings.NewReader("λx.λy.x"), ""},
+			[]any{"λx.λy.x", ""},
 			[]any{T, nil},
 		},
 		{
 			"x. (one (two (three (four five))))",
 			parse,
-			[]any{strings.NewReader("x. (one (two (three (four five))))"), ""},
+			[]any{"x. (one (two (three (four five))))", ""},
 			[]any{
 				&AbsExpr{
 					expr{},
@@ -551,7 +576,7 @@ func TestParserUntypedλCalc(t *testing.T) {
 		{
 			"x. one two three four five",
 			parse,
-			[]any{strings.NewReader("x. one two three four five"), ""},
+			[]any{"x. one two three four five", ""},
 			[]any{
 				&AbsExpr{
 					expr{},
@@ -586,7 +611,7 @@ func TestParserPrimitiveType(t *testing.T) {
 		{
 			"boolean",
 			parse,
-			[]any{strings.NewReader("λx : bool . x && y"), ""},
+			[]any{"λx : bool . x && y", ""},
 			[]any{
 				&AbsExpr{
 					expr{},
@@ -605,7 +630,7 @@ func TestParserPrimitiveType(t *testing.T) {
 		{
 			"int",
 			parse,
-			[]any{strings.NewReader("λx : int . x + y"), ""},
+			[]any{"λx : int . x + y", ""},
 			[]any{
 				&AbsExpr{
 					expr{},
@@ -624,7 +649,7 @@ func TestParserPrimitiveType(t *testing.T) {
 		{
 			"float",
 			parse,
-			[]any{strings.NewReader("λx : float . x +. y"), ""},
+			[]any{"λx : float . x +. y", ""},
 			[]any{
 				&AbsExpr{
 					expr{},
@@ -643,7 +668,7 @@ func TestParserPrimitiveType(t *testing.T) {
 		{
 			"float",
 			parse,
-			[]any{strings.NewReader("λx : unit. *"), ""},
+			[]any{"λx : unit. *", ""},
 			[]any{
 				&AbsExpr{
 					expr{},
@@ -662,7 +687,7 @@ func TestParserArrowType(t *testing.T) {
 		{
 			"bool → bool",
 			parse,
-			[]any{strings.NewReader("λx : bool → bool . x y"), ""},
+			[]any{"λx : bool → bool . x y", ""},
 			[]any{
 				&AbsExpr{
 					expr{},
@@ -680,7 +705,7 @@ func TestParserArrowType(t *testing.T) {
 		{
 			"bool → bool → bool (right associative: bool → (bool → bool))",
 			parse,
-			[]any{strings.NewReader("λx : bool → bool → bool . x y z"), ""},
+			[]any{"λx : bool → bool → bool . x y z", ""},
 			[]any{
 				&AbsExpr{
 					expr{},
@@ -706,7 +731,7 @@ func TestParserArrowType(t *testing.T) {
 		{
 			"bool → bool → bool → int",
 			parse,
-			[]any{strings.NewReader("λx : bool → bool → bool → int . (x y z) + 3"), ""},
+			[]any{"λx : bool → bool → bool → int . (x y z) + 3", ""},
 			[]any{
 				&AbsExpr{
 					expr{},
@@ -739,7 +764,7 @@ func TestParserArrowType(t *testing.T) {
 		{
 			"(bool → bool) → bool (manually altered associativity)",
 			parse,
-			[]any{strings.NewReader("λx : (bool → bool) → bool . x y z"), ""},
+			[]any{"λx : (bool → bool) → bool . x y z", ""},
 			[]any{
 				&AbsExpr{
 					expr{},
@@ -773,7 +798,7 @@ func TestParserArrowTypeShort(t *testing.T) {
 		{
 			"bool → bool",
 			parse,
-			[]any{strings.NewReader("x : bool → bool . x y"), ""},
+			[]any{"x : bool → bool . x y", ""},
 			[]any{
 				&AbsExpr{
 					expr{},
@@ -791,7 +816,7 @@ func TestParserArrowTypeShort(t *testing.T) {
 		{
 			"bool → bool → bool (right associative: bool → (bool → bool))",
 			parse,
-			[]any{strings.NewReader("x : bool → bool → bool . x y z"), ""},
+			[]any{"x : bool → bool → bool . x y z", ""},
 			[]any{
 				&AbsExpr{
 					expr{},
@@ -817,7 +842,7 @@ func TestParserArrowTypeShort(t *testing.T) {
 		{
 			"bool → bool → bool → int",
 			parse,
-			[]any{strings.NewReader("x : bool → bool → bool → int . (x y z) + 3"), ""},
+			[]any{"x : bool → bool → bool → int . (x y z) + 3", ""},
 			[]any{
 				&AbsExpr{
 					expr{},
@@ -850,7 +875,7 @@ func TestParserArrowTypeShort(t *testing.T) {
 		{
 			"(bool → bool) → bool (manually altered associativity)",
 			parse,
-			[]any{strings.NewReader("x : (bool → bool) → bool . x y z"), ""},
+			[]any{"x : (bool → bool) → bool . x y z", ""},
 			[]any{
 				&AbsExpr{
 					expr{},
@@ -883,7 +908,7 @@ func TestParserArrowProductType(t *testing.T) {
 		{
 			"bool × int → bool := (bool×int) → bool",
 			parse,
-			[]any{strings.NewReader("λx : bool×int → bool . x y"), ""},
+			[]any{"λx : bool×int → bool . x y", ""},
 			[]any{
 				&AbsExpr{
 					expr{},
@@ -903,7 +928,7 @@ func TestParserArrowProductType(t *testing.T) {
 		{
 			"bool × (int → bool)",
 			parse,
-			[]any{strings.NewReader("λx : bool×(int → bool) . x y"), ""},
+			[]any{"λx : bool×(int → bool) . x y", ""},
 			[]any{
 				&AbsExpr{
 					expr{},
@@ -930,7 +955,7 @@ func TestParserProductType(t *testing.T) {
 		{
 			"bool × int × bool := bool×(int×bool)",
 			parse,
-			[]any{strings.NewReader("λx : bool×int×bool . x y"), ""},
+			[]any{"λx : bool×int×bool . x y", ""},
 			[]any{
 				&AbsExpr{
 					expr{},
@@ -950,7 +975,7 @@ func TestParserProductType(t *testing.T) {
 		{
 			"(bool × int) × bool",
 			parse,
-			[]any{strings.NewReader("λx : (bool×int)×bool . x y"), ""},
+			[]any{"λx : (bool×int)×bool . x y", ""},
 			[]any{
 				&AbsExpr{
 					expr{},
@@ -975,7 +1000,7 @@ func TestParserProduct(t *testing.T) {
 		{
 			"<>",
 			parse,
-			[]any{strings.NewReader("〈〉"), ""},
+			[]any{"〈〉", ""},
 			[]any{
 				nil,
 				fmt.Errorf(":1:2: Unexpected token: 〉"),
@@ -984,7 +1009,7 @@ func TestParserProduct(t *testing.T) {
 		{
 			"<X>",
 			parse,
-			[]any{strings.NewReader("〈X〉"), ""},
+			[]any{"〈X〉", ""},
 			[]any{
 				&VarExpr{expr{}, "X"},
 				nil,
@@ -993,7 +1018,7 @@ func TestParserProduct(t *testing.T) {
 		{
 			"<X, Y>",
 			parse,
-			[]any{strings.NewReader("〈X, Y〉"), ""},
+			[]any{"〈X, Y〉", ""},
 			[]any{
 				&ProductExpr{expr{},
 					&VarExpr{expr{}, "X"},
@@ -1005,7 +1030,7 @@ func TestParserProduct(t *testing.T) {
 		{
 			"<X, Y, Z>",
 			parse,
-			[]any{strings.NewReader("〈X, Y, Z〉"), ""},
+			[]any{"〈X, Y, Z〉", ""},
 			[]any{
 				&ProductExpr{expr{},
 					&VarExpr{expr{}, "X"},
@@ -1020,7 +1045,7 @@ func TestParserProduct(t *testing.T) {
 		{
 			"<X, <Y, Z>>",
 			parse,
-			[]any{strings.NewReader("〈X, 〈Y, Z〉〉"), ""},
+			[]any{"〈X, 〈Y, Z〉〉", ""},
 			[]any{
 				&ProductExpr{expr{},
 					&VarExpr{expr{}, "X"},
@@ -1040,7 +1065,7 @@ func TestParserBasicLetIn(t *testing.T) {
 		{
 			"let",
 			parse,
-			[]any{strings.NewReader("let"), ""},
+			[]any{"let", ""},
 			[]any{
 				nil,
 				fmt.Errorf(":1:4: Expecting variable name after let, got: EOF"),
@@ -1049,7 +1074,7 @@ func TestParserBasicLetIn(t *testing.T) {
 		{
 			"let 42",
 			parse,
-			[]any{strings.NewReader("let 42"), ""},
+			[]any{"let 42", ""},
 			[]any{
 				nil,
 				fmt.Errorf(":1:5: Expecting variable name after let, got: int64"),
@@ -1058,7 +1083,7 @@ func TestParserBasicLetIn(t *testing.T) {
 		{
 			"let x 42",
 			parse,
-			[]any{strings.NewReader("let x 42"), ""},
+			[]any{"let x 42", ""},
 			[]any{
 				nil,
 				fmt.Errorf(":1:7: Expecting equal after let $x, got: int64"),
@@ -1067,7 +1092,7 @@ func TestParserBasicLetIn(t *testing.T) {
 		{
 			"let x = 42",
 			parse,
-			[]any{strings.NewReader("let x = 42"), ""},
+			[]any{"let x = 42", ""},
 			[]any{
 				nil,
 				fmt.Errorf(":1:11: Expecting 'in' after let $x = $M, got EOF"),
@@ -1076,7 +1101,7 @@ func TestParserBasicLetIn(t *testing.T) {
 		{
 			"let x = 42 in",
 			parse,
-			[]any{strings.NewReader("let x = 42 in"), ""},
+			[]any{"let x = 42 in", ""},
 			[]any{
 				nil,
 				fmt.Errorf(":1:14: Unexpected token: EOF"),
@@ -1085,7 +1110,7 @@ func TestParserBasicLetIn(t *testing.T) {
 		{
 			"let x = 42 in x",
 			parse,
-			[]any{strings.NewReader("let x = 42 in x"), ""},
+			[]any{"let x = 42 in x", ""},
 			[]any{
 				&AppExpr{expr{},
 					&AbsExpr{expr{},
@@ -1101,7 +1126,7 @@ func TestParserBasicLetIn(t *testing.T) {
 		{
 			"let x = 42 in x + 3",
 			parse,
-			[]any{strings.NewReader("let x = 42 in x + 3"), ""},
+			[]any{"let x = 42 in x + 3", ""},
 			[]any{
 				&AppExpr{expr{},
 					&AbsExpr{expr{},

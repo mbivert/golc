@@ -106,7 +106,7 @@ func inferSType(x Expr) (Expr, error) {
 			case tokenSlash:
 				_, lok := l.getType().(*IntType)
 				_, rok := r.getType().(*IntType)
-				if !lok || ! rok {
+				if !lok || !rok {
 					return nil, fmt.Errorf("%s : (int×int) → int; got (%s×%s)",
 						x.(*BinaryExpr).op, l.getType(), r.getType(),
 					)
@@ -123,7 +123,7 @@ func inferSType(x Expr) (Expr, error) {
 			case tokenMore:
 				_, lok := l.getType().(*IntType)
 				_, rok := r.getType().(*IntType)
-				if !lok || ! rok {
+				if !lok || !rok {
 					return nil, fmt.Errorf("%s : (int×int) → bool; got (%s×%s)",
 						x.(*BinaryExpr).op, l.getType(), r.getType(),
 					)
@@ -140,7 +140,7 @@ func inferSType(x Expr) (Expr, error) {
 			case tokenFSlash:
 				_, lok := l.getType().(*FloatType)
 				_, rok := r.getType().(*FloatType)
-				if !lok || ! rok {
+				if !lok || !rok {
 					return nil, fmt.Errorf("%s : (float×float) → float; got (%s×%s)",
 						x.(*BinaryExpr).op, l.getType(), r.getType(),
 					)
@@ -157,7 +157,7 @@ func inferSType(x Expr) (Expr, error) {
 			case tokenFMore:
 				_, lok := l.getType().(*FloatType)
 				_, rok := r.getType().(*FloatType)
-				if !lok || ! rok {
+				if !lok || !rok {
 					return nil, fmt.Errorf("%s : (float×float) → float; got (%s×%s)",
 						x.(*BinaryExpr).op, l.getType(), r.getType(),
 					)
@@ -170,7 +170,7 @@ func inferSType(x Expr) (Expr, error) {
 			case tokenAndAnd:
 				_, lok := l.getType().(*BoolType)
 				_, rok := r.getType().(*BoolType)
-				if !lok || ! rok {
+				if !lok || !rok {
 					return nil, fmt.Errorf("%s : (bool×bool) → bool; got (%s×%s)",
 						x.(*BinaryExpr).op, l.getType(), r.getType(),
 					)
@@ -181,7 +181,7 @@ func inferSType(x Expr) (Expr, error) {
 				panic("assert")
 			}
 
-			x.(*BinaryExpr).left  = l
+			x.(*BinaryExpr).left = l
 			x.(*BinaryExpr).right = r
 
 		case *AbsExpr:

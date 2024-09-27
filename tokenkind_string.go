@@ -24,28 +24,28 @@ func _() {
 	_ = x[tokenTUnit-13]
 	_ = x[tokenExcl-14]
 	_ = x[tokenPlus-15]
-	_ = x[tokenMinus-16]
-	_ = x[tokenStar-17]
-	_ = x[tokenSlash-18]
-	_ = x[tokenLess-19]
-	_ = x[tokenMore-20]
-	_ = x[tokenComa-21]
-	_ = x[tokenEqual-22]
-	_ = x[tokenLBracket-23]
-	_ = x[tokenRBracket-24]
-	_ = x[tokenOr-25]
-	_ = x[tokenAnd-26]
-	_ = x[tokenMoreEq-27]
-	_ = x[tokenLessEq-28]
-	_ = x[tokenFPlus-29]
-	_ = x[tokenFMinus-30]
-	_ = x[tokenFStar-31]
-	_ = x[tokenFSlash-32]
-	_ = x[tokenFLess-33]
-	_ = x[tokenFMore-34]
-	_ = x[tokenAndAnd-35]
-	_ = x[tokenOrOr-36]
-	_ = x[tokenFMoreEq-37]
+	_ = x[tokenFPlus-16]
+	_ = x[tokenMinus-17]
+	_ = x[tokenFMinus-18]
+	_ = x[tokenStar-19]
+	_ = x[tokenFStar-20]
+	_ = x[tokenSlash-21]
+	_ = x[tokenFSlash-22]
+	_ = x[tokenLess-23]
+	_ = x[tokenFLess-24]
+	_ = x[tokenMore-25]
+	_ = x[tokenFMore-26]
+	_ = x[tokenComa-27]
+	_ = x[tokenEqual-28]
+	_ = x[tokenLBracket-29]
+	_ = x[tokenRBracket-30]
+	_ = x[tokenOr-31]
+	_ = x[tokenOrOr-32]
+	_ = x[tokenAnd-33]
+	_ = x[tokenAndAnd-34]
+	_ = x[tokenMoreEq-35]
+	_ = x[tokenFMoreEq-36]
+	_ = x[tokenLessEq-37]
 	_ = x[tokenFLessEq-38]
 	_ = x[tokenColon-39]
 	_ = x[tokenPi-40]
@@ -63,9 +63,9 @@ func _() {
 	_ = x[tokenMeas-52]
 }
 
-const _tokenKind_name = "EOFerrornameλ().float64int64boolboolintfloatunit!+-*/<>,=〈〉|&≥≤+.-.*./.<.>.&&||≥.≤.:π→×letinrecmatchwithifthenelsenewmeas"
+const _tokenKind_name = "EOFerrornameλ().float64int64boolboolintfloatunit!++.--.**.//.<<.>>.,=〈〉|||&&&≥≥.≤≤.:π→×letinrecmatchwithifthenelsenewmeas"
 
-var _tokenKind_index = [...]uint8{0, 3, 8, 12, 14, 15, 16, 17, 24, 29, 33, 37, 40, 45, 49, 50, 51, 52, 53, 54, 55, 56, 57, 58, 61, 64, 65, 66, 69, 72, 74, 76, 78, 80, 82, 84, 86, 88, 92, 96, 97, 99, 102, 104, 107, 109, 112, 117, 121, 123, 127, 131, 134, 138}
+var _tokenKind_index = [...]uint8{0, 3, 8, 12, 14, 15, 16, 17, 24, 29, 33, 37, 40, 45, 49, 50, 51, 53, 54, 56, 57, 59, 60, 62, 63, 65, 66, 68, 69, 70, 73, 76, 77, 79, 80, 82, 85, 89, 92, 96, 97, 99, 102, 104, 107, 109, 112, 117, 121, 123, 127, 131, 134, 138}
 
 func (i tokenKind) String() string {
 	if i >= tokenKind(len(_tokenKind_index)-1) {

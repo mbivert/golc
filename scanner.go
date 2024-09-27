@@ -1,113 +1,18 @@
+/*
+ * Scanner/lexer, modelled after Go's.
+ */
 package main
 
-/*
- * TODO: comments support
- *
- * TODO: we're duplicating some effort in parsing scalars
- *	(integers, floats): we identify them here, but actually
- *	parse them in the parser. Perhaps we could parse them
- *	here already, which would imply wasting a few token{} bytes.
- *
- *	For now set aside to focus on more interesting things.
- *
- * TODO: we're only partially supporting extended tokens in
- *	preparation for qlambda.
- *
- * NOTE: the parser is purposefully sophisticated in that it
- *	relies on a bufio.Scanner instead of e.g. assuming the
- *	the input files fits in a []byte (which should be the
- *	expected use-case).
- *
- *	This means in particular that we need to handle cases
- *	like  a read yielding incomplete runes.
- */
-
 import (
-	"bufio"
-	"fmt"
-	"io"
 	"unicode"
 	"unicode/utf8"
 )
 
-type token struct {
-	kind   tokenKind
-	ln, cn uint // line/column numbers (1-based)
-	raw    string
-}
+const (
+	eof = -1
+)
 
-type scanner struct {
-	scan *bufio.Scanner
-
-	fn     string // filename
-	ln, cn uint   // line/column numbers (1-based)
-
-	// last emitted token's width (runes).
-	// the difference with utf8.RuneCountInString(tok.raw)
-	// is that, in case we emit a token, then go through
-	// the input buffer only to have to request more data
-	// to conclude, tw is reset.
-	tw uint
-
-	tok token // last token parsed
-}
-
-// single-rune tokens
-var ones = map[rune]tokenKind{
-	'(': tokenLParen,
-	')': tokenRParen,
-	'.': tokenDot,
-	':': tokenColon,
-	'!': tokenExcl,
-	'+': tokenPlus,
-	'-': tokenMinus,
-	'*': tokenStar,
-	'/': tokenSlash,
-	'<': tokenLess,
-	'>': tokenMore,
-	',': tokenComa,
-	'=': tokenEqual,
-	'〈': tokenLBracket,
-	'〉': tokenRBracket,
-	// NOTE: tokenOr and tokenAnd were added only
-	// for 'foo||' to be parsed correctly (see isSep() below)
-	// (nothing wrong with implementing them either)
-	'|': tokenOr,
-	'&': tokenAnd,
-	'≤': tokenLessEq,
-	'≥': tokenMoreEq,
-	'×': tokenProduct, // <P,Q> -> S <=> P×Q → S, as an ascii variant?
-	'→': tokenArrow,
-	'λ': tokenLambda,
-	'π': tokenPi,
-	// '⊸'  : tokenRMultiMap,
-	// '⊗'  : tokenOMult,
-	// '⊕'  : tokenOPlus,
-	// '⊤'  : tokenTrue,
-}
-
-// two ascii characters tokens
-var twos = map[string]tokenKind{
-	"+.": tokenFPlus,
-	"-.": tokenFMinus,
-	"*.": tokenFStar,
-	"/.": tokenFSlash,
-	"<.": tokenFLess,
-	">.": tokenFMore,
-	"->": tokenArrow,
-	"&&": tokenAndAnd,
-	"||": tokenOrOr,
-}
-
-// special names
-var many = map[string]tokenKind{
-	// XXX those were in twos, but aren't two bytes long.
-	"≤.": tokenFLessEq,
-	"≥.": tokenFMoreEq,
-	// XXX those were missing (untested thus)
-	"<=.": tokenFLessEq,
-	">=.": tokenFMoreEq,
-	// XXX and/or untested
+var identifiers = map[string]tokenKind {
 	"and": tokenAndAnd,
 	"or":  tokenOrOr,
 
@@ -124,6 +29,7 @@ var many = map[string]tokenKind{
 	"bool":  tokenTBool,
 	"int":   tokenTInt,
 	"float": tokenTFloat,
+
 	// NOTE: we could have used an integer 1 and better
 	// categorize it during parsing, but this is just simpler.
 	"unit": tokenTUnit,
@@ -136,235 +42,315 @@ var many = map[string]tokenKind{
 	//	"meas"   : tokenMeas,
 }
 
-func isSep(r rune) bool {
-	if unicode.IsSpace(r) {
-		return true
-	}
-
-	// single byte token
-	// so far, this encompasses all punctuation used
-	// (including twos' first byte); unused punctuation
-	// symbols are considered part of a name for now
-	_, ok := ones[r]
-	return ok
+type token struct {
+	kind   tokenKind
+	ln, cn uint // line/column numbers (1-based)
+	raw    string
 }
 
-// TODO no tests for error case
-func (s *scanner) scanRune(xs []byte, p int, atEOF bool) (rune, int, bool, error) {
-	r, w := utf8.DecodeRune(xs[p:])
-	if r == utf8.RuneError {
-		// either all input is in xs or we have enough
-		// bytes in xs to parse a complete rune (4 bytes
-		// per rune at most): that's an encoding error
-		if atEOF || p+3 < len(xs) {
-			s.tok.kind = tokenError
-			return r, 0, false, fmt.Errorf("Encoding issue")
+type scanner struct {
+	src []byte // input file, fully loaded
+
+	fn     string // filename
+	ln, cn uint   // line/column numbers (1-based; columns counted in rune)
+
+	ch      rune // current character/rune; set to eof when done
+	offset  int  // ch's offset
+	nextOff int  // offset + "len(ch)"
+}
+
+func (s *scanner) init(src []byte, fn string) {
+	s.src = src
+	s.fn = fn
+	s.ln = 1
+	s.cn = 0
+	s.ch = ' '
+	s.offset = 0
+	s.nextOff = 0
+
+	// load first rune
+	s.next()
+}
+
+// grab next rune
+//
+// XXX/TODO: the cn/ln handling is really clumsy.
+func (s *scanner) next() {
+
+	// we still have something to read
+	if s.nextOff < len(s.src) {
+		s.offset = s.nextOff
+
+		// assume common case: ascii character
+		r, w := rune(s.src[s.offset]), 1
+
+		if r >= utf8.RuneSelf {
+			r, w = utf8.DecodeRune(s.src[s.offset:])
 		}
 
-		// ask for extra bytes to try to complete a rune
-		return 0, 0, true, nil
-	}
-
-	return r, w, false, nil
-}
-
-func (s *scanner) setKind(k tokenKind) {
-	s.tok.raw = ""
-	s.tok.kind = k
-}
-
-func (s *scanner) skipWhites(xs []byte) int {
-	p := 0
-	for w := 0; p < len(xs); p += w {
-		var r rune
-		r, w = utf8.DecodeRune(xs[p:])
-		if !unicode.IsSpace(r) {
-			break
+		if r == utf8.RuneError && w == 1 {
+			panic("TODO")
 		}
+
 		s.cn++
 		if r == '\n' {
 			s.ln++
+			s.cn = 0
+		}
+
+		s.ch = r
+		s.nextOff += w
+
+	} else if s.ch != eof {
+		s.offset = len(s.src)
+		s.ch = eof
+		if s.cn == 0 {
 			s.cn = 1
+		} else {
+			s.cn++
 		}
 	}
-	return p
 }
 
-// Note that this is a bit redundant with what is later performed
-// in 'parser.go:/\) number\(', but this actually follows what
-// is done in Go's scanner/parser.
-//
-// As there are no union in Go, either we'd had to waste some bytes,
-// for every token, or use a data structure mimicking what is done
-// in the parsing (to "compensate" for the lack of union)
-func (s *scanner) scanNumber(xs []byte, p int, atEOF bool) (int, []byte, error) {
-	isFloat := false
-
-	s.setKind(tokenInt)
-
-	q := p
-	for ; q < len(xs); q++ {
-		if !unicode.IsDigit(rune(xs[q])) {
-			break
-		}
-		s.tw++
+func (s *scanner) peek() byte {
+	if s.nextOff < len(s.src) {
+		return s.src[s.nextOff]
 	}
-
-	if q < len(xs) && xs[q] == '.' {
-		isFloat = true
-		for q++; q < len(xs); q++ {
-			if xs[q] < '0' || xs[q] > '9' {
-				break
-			}
-			s.tw++
-		}
-	}
-
-	// ask for more
-	if q == len(xs) && !atEOF {
-		s.tw = 0
-		return p, nil, nil
-	}
-
-	if isFloat {
-		s.setKind(tokenFloat)
-	}
-
-	return q, xs[p:q], nil
+	return 0
 }
 
-func (s *scanner) scanNameOrId(xs []byte, p, q int) (int, []byte, error) {
-	s.setKind(tokenName)
-	y := xs[p:q]
-	if k, ok := many[string(y)]; ok {
-		s.setKind(k)
+func (s *scanner) peek2() (byte, byte) {
+	var b0, b1 byte
+
+	if s.nextOff < len(s.src) {
+		b0 = s.src[s.nextOff]
 	}
-	return q, y, nil
-}
-
-func (s *scanner) init(in io.Reader, fn string) {
-	s.scan = bufio.NewScanner(in)
-	s.fn = fn
-	s.ln = 1
-	s.cn = 1
-	s.tw = 0
-
-	// fragile.
-	//	s.tok.kind = tokenError
-
-	s.scan.Split(func(xs []byte, atEOF bool) (int, []byte, error) {
-		s.cn += uint(s.tw)
-		s.tw = 0
-
-		p := s.skipWhites(xs)
-
-		if p == len(xs) && atEOF {
-			s.setKind(tokenEOF)
-			return p, nil, bufio.ErrFinalToken
-		}
-
-		// we want at least 2 bytes here so we can
-		// decide whether we have a 2 ascii characters long token
-		// (see twos)
-		if p >= len(xs)-2 && !atEOF {
-			// ask for more
-			return p, nil, nil
-		}
-
-		r, w, more, err := s.scanRune(xs, p, atEOF)
-		if more {
-			return p, nil, nil
-		} else if err != nil {
-			return p, nil, err
-		}
-
-		// 2 ascii characters long tokens
-		if w == 1 && p+w < len(xs) {
-			if k, ok := twos[string(xs[p:p+2])]; ok {
-				s.setKind(k)
-				s.tw += 2
-				return p + 2, xs[p : p+2], nil
-			}
-		}
-
-		// special case
-		if r == '.' && p+w < len(xs) && unicode.IsDigit(rune(xs[p+w])) {
-			return s.scanNumber(xs, p, atEOF)
-		}
-
-		// single rune tokens
-		if k, ok := ones[r]; ok {
-			s.setKind(k)
-			s.tw++
-			return p + w, xs[p : p+w], nil
-		}
-
-		// .<digit> already managed earlier
-		if unicode.IsDigit(r) {
-			return s.scanNumber(xs, p, atEOF)
-		}
-
-		// (try to) read a name
-		q := p
-		for w := 0; q < len(xs); q += w {
-			var r rune
-			r, w, more, err = s.scanRune(xs, q, atEOF)
-			if more {
-				s.tw = 0
-				return p, nil, nil
-			} else if err != nil {
-				return q, nil, err
-			}
-
-			if isSep(r) {
-				return s.scanNameOrId(xs, p, q)
-			}
-			s.tw++
-		}
-
-		// This was the last word
-		if atEOF {
-			return s.scanNameOrId(xs, p, q)
-		}
-
-		// ask for more; start after spaces next time
-		s.tw = 0
-		return p, nil, nil
-	})
-}
-
-func (s *scanner) next() bool {
-	r := s.scan.Scan()
-	// Not a big fan of this but:
-	//	s.scan.Err() returns nil when we're at EOF.
-	//
-	//	which means we'll return a EOF token here
-	//	AND next() will return false. Which means
-	//	caller (see e.g. scanAll below) will have to
-	//	call next() one more time after having received
-	//	false to catch the EOF, which is bug prone.
-	//
-	//	The other option would involve keeping a "eof"
-	//	flag somewhere.; maybe there's a more idiomatic
-	//	way of handling the EOF token, so I'm leaving
-	//	this is-is for now.
-	if r || s.scan.Err() == nil {
-		s.tok.ln = s.ln
-		s.tok.cn = s.cn
-		s.tok.raw = s.scan.Text()
+	if s.nextOff+1 < len(s.src) {
+		b1 = s.src[s.nextOff+1]
 	}
-	return r
+	return b0, b1
 }
 
-// to ease tests
-func scanAll(in io.Reader, fn string) ([]token, error) {
+// skip whitespaces
+func (s *scanner) skipWhites() {
+	// NOTE: next() handles reseting ln/cn
+	for s.ch == ' ' || s.ch == '\t' || s.ch == '\n' || s.ch == '\r' {
+		s.next()
+	}
+}
+
+func (s *scanner) switch2(tok0 tokenKind, ch1 rune, tok1 tokenKind) tokenKind {
+	if s.ch == ch1 {
+		s.next()
+		return tok1
+	}
+	return tok0
+}
+
+func (s *scanner) switch3(
+	tok0 tokenKind, ch1 rune, tok1 tokenKind, ch2 rune, tok2 tokenKind,
+) tokenKind {
+	if s.ch == ch1 {
+		s.next()
+		return tok1
+	}
+	if s.ch == ch2 {
+		s.next()
+		return tok2
+	}
+	return tok0
+}
+
+func (s *scanner) switch4(tok0, tok1, tok2, tok3 tokenKind) tokenKind {
+	b0, b1 := s.ch, s.peek()
+
+	if b0 == '=' && b1 == '.' {
+		s.next()
+		s.next()
+		return tok3
+	}
+	if b0 == '=' {
+		s.next()
+		return tok2
+	}
+	if b0 == '.' {
+		s.next()
+		return tok1
+	}
+
+	return tok0
+}
+
+// returns lower-case ch iff ch is ASCII letter
+func lower(ch rune) rune { return ('a' - 'A') | ch }
+
+func isDigit(ch rune) bool { return '0' <= ch && ch <= '9' }
+
+func isLetter(ch rune) bool {
+	return ('a' <= lower(ch) && lower(ch) <= 'z') ||
+		ch == '_' || (ch >= utf8.RuneSelf && unicode.IsLetter(ch))
+}
+
+func (s *scanner) idOrName() tokenKind {
+	off := s.offset
+
+	for isLetter(s.ch) {
+		s.next()
+	}
+
+	if kind, ok := identifiers[string(s.src[off:s.offset])]; ok {
+		return kind
+	}
+	return tokenName
+}
+
+func (s *scanner) skipDigits() {
+	for isDigit(s.ch) {
+		s.next()
+	}
+}
+
+func (s *scanner) number() tokenKind {
+	var kind tokenKind
+
+	if s.ch == '.' {
+		s.next()
+		kind = tokenFloat
+		s.skipDigits()
+		return kind
+	}
+
+	s.skipDigits()
+
+	if s.ch == '.' {
+		s.next()
+		kind = tokenFloat
+		s.skipDigits()
+		return kind
+	}
+
+	kind = tokenInt
+	return kind
+}
+
+// grab next token
+func (s *scanner) scan() token {
+	s.skipWhites()
+
+	var kind tokenKind
+
+	ln, cn, off := s.ln, s.cn, s.offset
+
+	switch ch := s.ch; {
+
+	case isLetter(ch) && ch != 'λ':
+		kind = s.idOrName()
+	case isDigit(ch) || (ch == '.' && isDigit(rune(s.peek()))):
+		kind = s.number()
+
+	case ch == eof:
+		kind = tokenEOF
+
+	default:
+		s.next()
+
+		switch ch {
+		case 'λ':
+			kind = tokenLambda
+		case '(':
+			kind = tokenLParen
+		case ')':
+			kind = tokenRParen
+		case '.':
+			// floats (e.g. ".3") managed by outer switch
+			kind = tokenDot
+
+		case '!':
+			kind = tokenExcl
+
+		case '+':
+			kind = s.switch2(tokenPlus, '.', tokenFPlus)
+		case '-':
+			kind = s.switch3(tokenMinus, '.', tokenFMinus, '>', tokenArrow)
+		case '*':
+			kind = s.switch2(tokenStar, '.', tokenFStar)
+		case '/':
+			kind = s.switch2(tokenSlash, '.', tokenFSlash)
+
+		case '<':
+			kind = s.switch4(
+				tokenLess,    // <
+				tokenFLess,   // <.
+				tokenLessEq,  // <=
+				tokenFLessEq, // <=.
+			)
+		case '>':
+			kind = s.switch4(
+				tokenMore,    // >
+				tokenFMore,   // >.
+				tokenMoreEq,  // >=
+				tokenFMoreEq, // >=.
+			)
+
+		case ',':
+			kind = tokenComa
+		case '=':
+			kind = tokenEqual
+
+		case '〈':
+			kind = tokenLBracket
+		case '〉':
+			kind = tokenRBracket
+
+		case '|':
+			kind = s.switch2(tokenOr, '|', tokenOrOr)
+		case '&':
+			kind = s.switch2(tokenAnd, '&', tokenAndAnd)
+
+		case '≤':
+			kind = s.switch2(tokenLessEq, '.', tokenFLessEq)
+		case '≥':
+			kind = s.switch2(tokenMoreEq, '.', tokenFMoreEq)
+
+		case ':':
+			kind = tokenColon
+
+		case 'π':
+			kind = tokenPi
+
+		case '→':
+			kind = tokenArrow
+
+		case '×':
+			kind = tokenProduct
+
+		case eof:
+			kind = tokenEOF
+
+		default:
+			panic("assert TODO")
+		}
+	}
+
+	return token{kind, ln, cn, string(s.src[off:s.offset])}
+}
+
+// grab next token
+func (s *scanner) scanAll() ([]token, error) {
+	var toks []token
+
+	for {
+		tok := s.scan()
+		toks = append(toks, tok)
+		if tok.kind == tokenEOF {
+			return toks, nil
+		}
+	}
+}
+
+// grab next token
+func scanAll(src string, fn string) ([]token, error) {
 	var s scanner
-	s.init(in, fn)
-	ts := []token{}
-	for s.next() {
-		ts = append(ts, s.tok)
-	}
-	ts = append(ts, s.tok)
-	//	println("Error: ", s.scan.Err())
-	return ts, s.scan.Err()
+	s.init([]byte(src), fn)
+	return s.scanAll()
 }
