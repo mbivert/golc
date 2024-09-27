@@ -227,7 +227,7 @@ func inferSType(x Expr) (Expr, error) {
 				return nil, fmt.Errorf("Can't apply '%s' to '%s'", r.getType(), l.getType())
 			}
 
-			x.setType(l.(*AbsExpr).right.getType())
+			x.setType(l.getType().(*ArrowType).right)
 			x.(*AppExpr).left = l
 			x.(*AppExpr).right = r
 

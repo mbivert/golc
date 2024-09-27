@@ -184,7 +184,7 @@ func renameExpr(x Expr, b, a string) Expr {
 		if x.(*AbsExpr).name == a {
 			x.(*AbsExpr).name = b
 		}
-		x.(*AppExpr).right = renameExpr(x.(*AppExpr).right, b, a)
+		x.(*AbsExpr).right = renameExpr(x.(*AbsExpr).right, b, a)
 		return x
 
 	default:

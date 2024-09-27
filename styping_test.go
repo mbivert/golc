@@ -164,6 +164,40 @@ func TestSTypingInferSTypeApps(t *testing.T) {
 				fmt.Errorf("Can't apply 'int' to 'bool → bool'"),
 			},
 		},
+		// this one's a nightmare; highlights the fact that the left
+		// side of an application isn't always an AbsExpr, just something
+		// which has an ArrowType
+		{
+			"λf:int→int.x:int. f (x+3)",
+			inferSType,
+			[]any{mustParse("λf:int→int.x:int. f (x+3)")},
+			[]any{
+				&AbsExpr{expr{&ArrowType{typ{},
+						&ArrowType{typ{}, &IntType{typ{}}, &IntType{typ{}}},
+						&ArrowType{typ{}, &IntType{typ{}}, &IntType{typ{}}},
+					}},
+					&ArrowType{typ{}, &IntType{typ{}}, &IntType{typ{}}},
+					"f",
+					&AbsExpr{expr{&ArrowType{typ{},
+							&IntType{typ{}},
+							&IntType{typ{}},
+						}},
+						&IntType{typ{}},
+						"x",
+						&AppExpr{expr{&IntType{}},
+							&VarExpr{expr{&ArrowType{typ{}, &IntType{typ{}}, &IntType{typ{}}}},
+								"f",
+							},
+						&BinaryExpr{expr{&IntType{}},
+							tokenPlus,
+							&VarExpr{expr{&IntType{typ{}}}, "x"},
+							&IntExpr{expr{&IntType{typ{}}}, 3},
+						},
+					}},
+				},
+				nil,
+			},
+		},
 	})
 }
 

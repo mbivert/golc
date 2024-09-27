@@ -65,5 +65,32 @@ func TestEvalRenameExpr(t *testing.T) {
 				mustSTypeParse("(2<3) && !(true) && (3. ≤. 5.)"),
 			},
 		},
+		// NOTE: type checking doesn't like for x to be unbounded hence mustParse()
+		// instead of mustSTypeParse().
+		// TODO: there are plans to allow it, as x's type can be infered.
+		{
+			"(2<3) && !(true) && 3. ≤. x",
+			renameExpr,
+			[]any{mustParse("(2<3) && !(true) && 3. ≤. x"), "y", "x"},
+			[]any{
+				mustParse("(2<3) && !(true) && 3. ≤. y"),
+			},
+		},
+		{
+			"λx:int. x+3",
+			renameExpr,
+			[]any{mustSTypeParse("λx:int. x+3"), "y", "x"},
+			[]any{
+				mustSTypeParse("λy:int. y+3"),
+			},
+		},
+		{
+			"λf:int→int.x:int. f (x+3)",
+			renameExpr,
+			[]any{mustSTypeParse("λf:int→int.x:int. f (x+3)"), "g", "f"},
+			[]any{
+				mustSTypeParse("λg:int→int.x:int. g (x+3)"),
+			},
+		},
 	})
 }
