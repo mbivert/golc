@@ -14,16 +14,10 @@ The embedded ``go:generate`` stringer provides us with a
 
   - [tokenkind_string.go][gh-mb-golc-tokenkind_string.go].
 
-The tokens are initially processed from an [``io.Reader``][godoc-io-reader]
-by our ``scanner``, which itself relies on a [``bufio.Scanner``][godoc-bufio-scanner]:
+The tokens are scanned from a ``[]byte`` buffer:
 
   - [scanner.go][gh-mb-golc-scanner.go];
   - [scanner_test.go][gh-mb-golc-scanner_test.go];
-
-There are a few tricky bits (e.g. a single unicode rune may be split on two
-consecutive read); the scanning is way too sophisticated for a toy λ-calculus,
-but that's purposeful (having the input stored in a big string would have
-been sufficient).
 
 The scanned tokens are then parsed by a ad-hoc parser:
 
@@ -39,6 +33,19 @@ actual "evaluation" (reduction):
   - [utils_test.go][gh-mb-golc-utils_test.go];
   - [eval.go][gh-mb-golc-eval.go];
   - [eval_test.go][gh-mb-golc-eval_test.go];
+
+Simple type inference (as in, simply-typed λ-calculus) can be
+found in:
+
+  - [styping.go][gh-mb-golc-styping.go];
+  - [styping_test.go][gh-mb-golc-styping_test.go];
+
+Budding polymorphic type inference in (not sure we'll need to
+be this sophisticated?):
+
+  - [typing.go][gh-mb-golc-typing.go];
+  - [typing_test.go][gh-mb-golc-typing_test.go];
+
 
 [src/go/token/token.go]: https://github.com/golang/go/blob/master/src/go/token/token.go
 [src/go/scanner/scanner.go]: https://github.com/golang/go/blob/master/src/go/scanner/scanner.go
@@ -59,5 +66,10 @@ actual "evaluation" (reduction):
 [gh-mb-golc-eval.go]: https://github.com/mbivert/golc/blob/master/eval.go
 [gh-mb-golc-eval_test.go]: https://github.com/mbivert/golc/blob/master/eval_test.go
 
-[godoc-io-reader]: https://pkg.go.dev/io#Reader
-[godoc-bufio-scanner]: https://pkg.go.dev/bufio#Scanner
+[gh-mb-golc-styping.go]: https://github.com/mbivert/golc/blob/master/styping.go
+[gh-mb-golc-styping_test.go]: https://github.com/mbivert/golc/blob/master/styping_test.go
+
+[gh-mb-golc-typing.go]: https://github.com/mbivert/golc/blob/master/typing.go
+[gh-mb-golc-typing_test.go]: https://github.com/mbivert/golc/blob/master/typing_test.go
+
+
