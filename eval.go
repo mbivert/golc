@@ -239,6 +239,12 @@ func substituteExpr(x, y Expr, a string) Expr {
 			x.(*AbsExpr).right = substituteExpr(x.(*AbsExpr).right, y, a)
 			return x
 		}
+		// bounded variable name of x occurs freely in y:
+		// if we're about so swap a for y below the current
+		// abstraction, we need to make sure our name won't
+		// conflict with what happens in y. Hence, we need
+		// to get a name which would conflict with nothing in
+		// x, y or a for that matter.
 		b := getFresh(allVars(x.(*AbsExpr).right), allVars(y), map[string]bool{a:true})
 		x.(*AbsExpr).name = b
 		x.(*AbsExpr).right = substituteExpr(

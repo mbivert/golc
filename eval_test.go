@@ -155,7 +155,7 @@ func TestEvalRenameExpr(t *testing.T) {
 func TestEvalSubstituteExpr(t *testing.T) {
 	ftests.Run(t, []ftests.Test{
 		{
-			"x | λx. λy. x y | x (var, match replaced)",
+			"matching variable is substituted",
 			substituteExpr,
 			[]any{mustParse("x"), mustParse("λx. λy. x y"), "x"},
 			[]any{
@@ -163,7 +163,7 @@ func TestEvalSubstituteExpr(t *testing.T) {
 			},
 		},
 		{
-			"y | λx. λy. x y | x (var, no match)",
+			"un-matching variable name",
 			substituteExpr,
 			[]any{mustParse("y"), mustParse("λx. λy. x y"), "x"},
 			[]any{
@@ -171,7 +171,7 @@ func TestEvalSubstituteExpr(t *testing.T) {
 			},
 		},
 		{
-			"y | λx. λy. x y | x (two app occurences)",
+			"variable substituted in both parts of an apply",
 			substituteExpr,
 			[]any{mustParse("(x (x y))"), mustParse("λx. λy. x y"), "x"},
 			[]any{
@@ -179,7 +179,15 @@ func TestEvalSubstituteExpr(t *testing.T) {
 			},
 		},
 		{
-			"λx. λz. x z | λx. λy. x y | z (bound var not substituted)",
+			"bound variable not substituted",
+			substituteExpr,
+			[]any{mustParse("λx. λz. x z"), mustParse("λx. λy. x y"), "x"},
+			[]any{
+				mustParse("λx. λz. x z"),
+			},
+		},
+		{
+			"deeper bound variable not substituted",
 			substituteExpr,
 			[]any{mustParse("λx. λz. x z"), mustParse("λx. λy. x y"), "z"},
 			[]any{
@@ -187,7 +195,7 @@ func TestEvalSubstituteExpr(t *testing.T) {
 			},
 		},
 		{
-			"λx. λz. x z | λx. λy. x y | z (free variable substituted)",
+			"replacing a free variable, no conflict",
 			substituteExpr,
 			[]any{mustParse("λx. λy. x z"), mustParse("λx. λy. x y"), "z"},
 			[]any{
@@ -195,11 +203,194 @@ func TestEvalSubstituteExpr(t *testing.T) {
 			},
 		},
 		{
-			"λx. λy. x z y | λx. λy. x y | z (free variable substituted, with renaming)",
+			"replacing a free variable, renaming",
 			substituteExpr,
 			[]any{mustParse("λx. λy. x z y"), mustParse("λx. λz. x y z"), "z"},
 			[]any{
 				mustParse("λx. λx0. x (λx. λz. x y z) x0"),
+			},
+		},
+		{
+			"replacing a free variable, renaming (bis)",
+			substituteExpr,
+			[]any{mustParse("λx. λy. x z y"), mustParse("λx. λz. x y z"), "z"},
+			[]any{
+				mustParse("λx. λx0. x (λx. λz. x y z) x0"),
+			},
+		},
+		{
+			"Selinger's example",
+			substituteExpr,
+			[]any{mustParse("λx. y x"), mustParse("λz. x z"), "y"},
+			[]any{
+				mustParse("λx0. (λz. x z) x0"),
+			},
+		},
+		{
+			"replacing bound variable by the variable to rename",
+			substituteExpr,
+			[]any{
+				mustParse(`
+					(λf. n.
+						((λy.
+							(
+								(λn. x. y. (n (λz. y) x))
+								n
+								(λf. x. (f x)) y))
+						(λx0.
+							(n (f (λf. x. (n (λg. h. (h (g f))) (λu. x) (λu. u))) x0)))))
+				`),
+				mustParse("f"),
+				"x0",
+			},
+			[]any{
+				mustParse(`
+					(λx1. n.
+						((λy.
+							(
+								(λn. x. y. (n (λz. y) x))
+								n
+								(λx1. x. (x1 x)) y))
+						(λx0.
+							(n (x1 (λx1. x. (n (λg. h. (h (g x1))) (λu. x) (λu. u))) x0)))))
+				`),
+			},
+		},
+		{
+			"don't re-use a name already used below",
+			substituteExpr,
+			[]any{
+				mustParse(`(λn. x0. y. (n (λz. y) x0))`),
+				mustParse(`
+					(λx0.
+						(n (x1 (λx1. x0.
+							(n (λg. h. (h (g x1))) (λu. x0) (λu. u))) x0)))
+				`),
+				"y",
+			},
+			[]any{
+				mustParse(`(λx2. x0. y. (x2 (λz. y) x0))`),
+			},
+		},
+		{
+			"\"complex\" substitute",
+			substituteExpr,
+			[]any{
+				mustParse(`
+					(λy.
+						(λp. λx. λy. p x y)
+						x
+						(λx. λy. x)
+						(
+							(λp. λx. λy. p x y)
+							y
+							(λx. λy. x)
+							(λx. λy. y)))
+				`),
+				mustParse(`(λx. λy. x)`),
+				"x",
+			},
+			[]any{
+				mustParse(`
+					(λy.
+						(λp. λx. λy. p x y)
+						(λx. λy. x)
+						(λx. λy. x)
+						(
+							(λp. λx. λy. p x y)
+							y
+							(λx. λy. x)
+							(λx. λy. y)))
+				`),
+			},
+		},
+		{
+			"\"complex\" substitute (bis)",
+			substituteExpr,
+			[]any{
+				mustParse(`
+					(λp. λx. λy. p x y)
+					(λx. λy. x)
+					(λx. λy. x)
+					(
+						(λp. λx. λy. p x y)
+						y
+						(λx. λy. x)
+						(λx. λy. y))
+				`),
+				mustParse(`(λx. λy. x)`),
+				"y",
+			},
+			[]any{
+				mustParse(`
+					(λp. λx. λy. p x y)
+					(λx. λy. x)
+					(λx. λy. x)
+					(
+						(λp. λx. λy. p x y)
+						(λx. λy. x)
+						(λx. λy. x)
+						(λx. λy. y))
+				`),
+			},
+		},
+		{
+			"\"complex\" substitute (ter)",
+			substituteExpr,
+			[]any{
+				mustParse(`((λx. λy. x) (λx. λy. x) y)`),
+				mustParse(`((λx. λy. x) (λx. λy. x) (λx. λy. y))`),
+				"y",
+			},
+			[]any{
+				mustParse(`
+				(λx. λy. x) (λx. λy. x)
+					((λx. λy. x) (λx. λy. x) (λx. λy. y))
+				`),
+			},
+		},
+		{
+			"\"complex\" substitute (xor, 1)",
+			substituteExpr,
+			[]any{
+				mustParse(`
+					((((λp. λx. λy. (p x y)) x)
+						((((λp. λx. λy. (p x y)) y) (λx. λy. y)) (λx. λy. x)))
+						((((λp. λx. λy. (p x y)) y) (λx. λy. x)) (λx. λy. y)))
+				`),
+				mustParse(`(λx. (λy. x))`),
+				"y",
+			},
+			[]any{
+				mustParse(`
+					((((λp. λx. λy. (p x y)) x)
+						((((λp. λx. λy. (p x y)) (λx. (λy. x))) (λx. λy. y)) (λx. λy. x)))
+						((((λp. λx. λy. (p x y)) (λx. (λy. x))) (λx. λy. x)) (λx. λy. y)))
+				`),
+			},
+		},
+		{
+			"\"complex\" substitute (xor, 2)",
+			substituteExpr,
+			[]any{
+				mustParse(`
+					(λy.
+						((((λp. λx. λy. (p x y)) x)
+							((((λp. λx. λy. (p x y)) y) (λx. λy. y)) (λx. λy. x)))
+							((((λp. λx. λy. (p x y)) y) (λx. λy. x)) (λx. λy. y))))
+						(λx. (λy. x))
+				`),
+				mustParse(`(λx. (λy. x))`),
+				"x",
+			},
+			[]any{
+				mustParse(`
+					(λy.
+						((((λp. λx. λy. (p x y)) (λx. (λy. x)))
+							((((λp. λx. λy. (p x y)) y) (λx. λy. y)) (λx. λy. x)))
+							((((λp. λx. λy. (p x y)) y) (λx. λy. x)) (λx. λy. y))))
+						(λx. (λy. x))
+				`),
 			},
 		},
 	})
