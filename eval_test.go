@@ -392,7 +392,7 @@ func TestEvalArithmetic(t *testing.T) {
 	})
 }
 
-func TestEvalLambdMaths(t *testing.T) {
+func TestEvalLambdaMaths(t *testing.T) {
 	ftests.Run(t, []ftests.Test{
 		/*
 			{
@@ -406,6 +406,14 @@ func TestEvalLambdMaths(t *testing.T) {
 			"(λx:int. x+3) 5",
 			evalExpr,
 			[]any{mustSTypeParse("(λx:int. x+3) 5")},
+			[]any{
+				&IntExpr{expr{&IntType{typ{}}}, 8},
+			},
+		},
+		{
+			"let f = (λx:int. x+3) in f 5",
+			evalExpr,
+			[]any{mustSTypeParse("let f = (λx:int. x+3) : int → int in f 5")},
 			[]any{
 				&IntExpr{expr{&IntType{typ{}}}, 8},
 			},

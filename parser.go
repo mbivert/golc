@@ -550,6 +550,13 @@ func (p *parser) letIn() Expr {
 
 	x := p.appExpr()
 
+	t := Type(&typ{})
+
+	if p.has(tokenColon) {
+		p.next()
+		t = p.Type()
+	}
+
 	if !p.has(tokenIn) {
 		p.errf("Expecting 'in' after let $x = $M, got %s", p.tok.kind)
 	}
@@ -557,8 +564,6 @@ func (p *parser) letIn() Expr {
 	p.next()
 
 	y := p.appExpr()
-
-	t := Type(&typ{})
 
 	// Desugar now; perhaps we'd want to have a dedicated pass.
 	// XXX meh, no typing annotation
@@ -640,6 +645,8 @@ var endAppExpr = map[tokenKind]bool{
 	// we just parsed the expression $expr associated to a bound
 	// name $x of a let/in construct (let $x = $expr in ...)
 	tokenIn: true,
+
+	tokenColon: true,
 }
 
 func (p *parser) appExpr() Expr {
@@ -657,7 +664,7 @@ func (p *parser) appExpr() Expr {
 }
 
 // parsing entry point, only called once.
-func (p *parser) parse() (e Expr, err error) {
+func (p *parser) parse() (x Expr, err error) {
 	defer func() {
 		if x := recover(); x != nil {
 			err = x.(error)
@@ -666,26 +673,26 @@ func (p *parser) parse() (e Expr, err error) {
 	}()
 
 	p.next()
-	e = p.appExpr()
-	return e, err
+	x = p.appExpr()
+	return x, err
 }
 
 func parse(src string, fn string) (Expr, error) {
 	var p parser
 	p.init(src, fn)
-	e, err := p.parse()
+	x, err := p.parse()
 	// remaining input is unexpected
 	if err == nil && !p.has(tokenEOF) {
 		err = p.errHeref("Unexpected token: %s", p.tok.kind.String())
 	}
-	return e, err
+	return x, err
 }
 
 // To ease tests so far
 func mustParse(src string) Expr {
-	e, err := parse(src, "")
+	x, err := parse(src, "")
 	if err != nil {
 		panic(err)
 	}
-	return e
+	return x
 }

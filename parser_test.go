@@ -1143,5 +1143,25 @@ func TestParserBasicLetIn(t *testing.T) {
 				nil,
 			},
 		},
+		{
+			"let x = 42:int in x + 3",
+			parse,
+			[]any{"let x = 42 : int in x + 3", ""},
+			[]any{
+				&AppExpr{expr{},
+					&AbsExpr{expr{},
+						&IntType{typ{}},
+						"x",
+						&BinaryExpr{expr{},
+							tokenPlus,
+							&VarExpr{expr{}, "x"},
+							&IntExpr{expr{&IntType{typ{}}}, 3},
+						},
+					},
+					&IntExpr{expr{&IntType{typ{}}}, 42},
+				},
+				nil,
+			},
+		},
 	})
 }
