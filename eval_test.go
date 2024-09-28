@@ -152,6 +152,59 @@ func TestEvalRenameExpr(t *testing.T) {
 	})
 }
 
+func TestEvalSubstituteExpr(t *testing.T) {
+	ftests.Run(t, []ftests.Test{
+		{
+			"x | λx. λy. x y | x (var, match replaced)",
+			substituteExpr,
+			[]any{mustParse("x"), mustParse("λx. λy. x y"), "x"},
+			[]any{
+				mustParse("λx. λy. x y"),
+			},
+		},
+		{
+			"y | λx. λy. x y | x (var, no match)",
+			substituteExpr,
+			[]any{mustParse("y"), mustParse("λx. λy. x y"), "x"},
+			[]any{
+				mustParse("y"),
+			},
+		},
+		{
+			"y | λx. λy. x y | x (two app occurences)",
+			substituteExpr,
+			[]any{mustParse("(x (x y))"), mustParse("λx. λy. x y"), "x"},
+			[]any{
+				mustParse("((λx. λy. x y) ((λx. λy. x y) y))"),
+			},
+		},
+		{
+			"λx. λz. x z | λx. λy. x y | z (bound var not substituted)",
+			substituteExpr,
+			[]any{mustParse("λx. λz. x z"), mustParse("λx. λy. x y"), "z"},
+			[]any{
+				mustParse("λx. λz. x z"),
+			},
+		},
+		{
+			"λx. λz. x z | λx. λy. x y | z (free variable substituted)",
+			substituteExpr,
+			[]any{mustParse("λx. λy. x z"), mustParse("λx. λy. x y"), "z"},
+			[]any{
+				mustParse("λx. λy. x (λx. λy. x y)"),
+			},
+		},
+		{
+			"λx. λy. x z y | λx. λy. x y | z (free variable substituted, with renaming)",
+			substituteExpr,
+			[]any{mustParse("λx. λy. x z y"), mustParse("λx. λz. x y z"), "z"},
+			[]any{
+				mustParse("λx. λx0. x (λx. λz. x y z) x0"),
+			},
+		},
+	})
+}
+
 /*
 	D/diff i t
 

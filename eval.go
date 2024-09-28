@@ -195,7 +195,7 @@ func renameExpr(x Expr, b, a string) Expr {
 }
 
 // β-substitution: x[y/a]: substituing a for y in x
-func substitute (x, y Expr, a string) Expr {
+func substituteExpr(x, y Expr, a string) Expr {
 	switch x.(type) {
 	case *UnitExpr:
 		return x
@@ -206,22 +206,22 @@ func substitute (x, y Expr, a string) Expr {
 	case *BoolExpr:
 		return x
 	case *ProductExpr:
-		x.(*ProductExpr).left = substitute(x.(*ProductExpr).left, y, a)
-		x.(*ProductExpr).right = substitute(x.(*ProductExpr).right, y, a)
+		x.(*ProductExpr).left = substituteExpr(x.(*ProductExpr).left, y, a)
+		x.(*ProductExpr).right = substituteExpr(x.(*ProductExpr).right, y, a)
 		return x
 
 	case *UnaryExpr:
-		x.(*UnaryExpr).right = substitute(x.(*UnaryExpr).right, y, a)
+		x.(*UnaryExpr).right = substituteExpr(x.(*UnaryExpr).right, y, a)
 		return x
 
 	case *BinaryExpr:
-		x.(*BinaryExpr).left = substitute(x.(*BinaryExpr).left, y, a)
-		x.(*BinaryExpr).right = substitute(x.(*BinaryExpr).right, y, a)
+		x.(*BinaryExpr).left = substituteExpr(x.(*BinaryExpr).left, y, a)
+		x.(*BinaryExpr).right = substituteExpr(x.(*BinaryExpr).right, y, a)
 		return x
 
 	case *AppExpr:
-		x.(*AppExpr).left = substitute(x.(*AppExpr).left, y, a)
-		x.(*AppExpr).right = substitute(x.(*AppExpr).right, y, a)
+		x.(*AppExpr).left = substituteExpr(x.(*AppExpr).left, y, a)
+		x.(*AppExpr).right = substituteExpr(x.(*AppExpr).right, y, a)
 		return x
 
 	case *VarExpr:
@@ -236,12 +236,12 @@ func substitute (x, y Expr, a string) Expr {
 			return x
 		}
 		if !isFree(y, name) {
-			x.(*AbsExpr).right = substitute(x.(*AbsExpr).right, y, a)
+			x.(*AbsExpr).right = substituteExpr(x.(*AbsExpr).right, y, a)
 			return x
 		}
 		b := getFresh(allVars(x.(*AbsExpr).right), allVars(y), map[string]bool{a:true})
 		x.(*AbsExpr).name = b
-		x.(*AbsExpr).right = substitute(
+		x.(*AbsExpr).right = substituteExpr(
 			renameExpr(x.(*AbsExpr).right, b, name), y, a,
 		)
 		return x
