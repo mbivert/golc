@@ -194,6 +194,65 @@ func renameExpr(x Expr, b, a string) Expr {
 	return nil
 }
 
+// β-substitution: x[y/a]: substituing a for y in x
+func substitute (x, y Expr, a string) Expr {
+	switch x.(type) {
+	case *UnitExpr:
+		return x
+	case *IntExpr:
+		return x
+	case *FloatExpr:
+		return x
+	case *BoolExpr:
+		return x
+	case *ProductExpr:
+		x.(*ProductExpr).left = substitute(x.(*ProductExpr).left, y, a)
+		x.(*ProductExpr).right = substitute(x.(*ProductExpr).right, y, a)
+		return x
+
+	case *UnaryExpr:
+		x.(*UnaryExpr).right = substitute(x.(*UnaryExpr).right, y, a)
+		return x
+
+	case *BinaryExpr:
+		x.(*BinaryExpr).left = substitute(x.(*BinaryExpr).left, y, a)
+		x.(*BinaryExpr).right = substitute(x.(*BinaryExpr).right, y, a)
+		return x
+
+	case *AppExpr:
+		x.(*AppExpr).left = substitute(x.(*AppExpr).left, y, a)
+		x.(*AppExpr).right = substitute(x.(*AppExpr).right, y, a)
+		return x
+
+	case *VarExpr:
+		if x.(*VarExpr).name == a {
+			return y
+		}
+		return x
+
+	case *AbsExpr:
+		name := x.(*AbsExpr).name
+		if name == a {
+			return x
+		}
+		if !isFree(y, name) {
+			x.(*AbsExpr).right = substitute(x.(*AbsExpr).right, y, a)
+			return x
+		}
+		b := getFresh(allVars(x.(*AbsExpr).right), allVars(y), map[string]bool{a:true})
+		x.(*AbsExpr).name = b
+		x.(*AbsExpr).right = substitute(
+			renameExpr(x.(*AbsExpr).right, b, name), y, a,
+		)
+		return x
+
+	default:
+		panic("assert")
+	}
+
+	return nil
+}
+
 // NOTE: we're returning an Expr here.
 //
 // This is because computation is expected to stop on irreducible

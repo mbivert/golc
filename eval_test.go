@@ -151,3 +151,17 @@ func TestEvalRenameExpr(t *testing.T) {
 		},
 	})
 }
+
+/*
+	D/diff i t
+
+	∂/pdiff t x u
+
+	⊙/tmult
+
+	⊕/tadd // depends on whether we want to combine λ-calcs
+
+
+	1 ∂ λ
+
+ */

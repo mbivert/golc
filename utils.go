@@ -94,6 +94,11 @@ func freeVars(x Expr) map[string]bool {
 	return aux(x, map[string]bool{})
 }
 
+func isFree(x Expr, a string) bool {
+	_, ok := freeVars(x)[a]
+	return ok
+}
+
 func allVars(x Expr) map[string]bool {
 	var aux func(Expr, map[string]bool) map[string]bool
 
@@ -180,12 +185,17 @@ func prettyPrint(x Expr) string {
 	return aux(x, false, false)
 }
 
-func getFresh(m map[string]bool) string {
+func getFresh(ms ...map[string]bool) string {
 	for n := 0; ; n++ {
 		s := fmt.Sprintf("x%d", n)
-		if _, ok := m[s]; !ok {
-			return s
+		for _, m := range ms {
+			if _, ok := m[s]; ok {
+				goto retry
+			}
 		}
+		return s
+
+	retry:
 	}
 }
 

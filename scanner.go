@@ -317,6 +317,11 @@ func (s *scanner) scan() token {
 		case eof:
 			kind = tokenEOF
 
+		// case '⊸': tokenRMultiMap
+		// case '⊗': tokenOMult
+		// case '⊕': tokenOPlus
+		// case '⊤': tokenTrue
+
 		default:
 			panic("assert TODO")
 		}
