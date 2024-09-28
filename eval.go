@@ -3,11 +3,12 @@
  */
 package main
 
-func evalUnaryExpr(x *UnaryExpr) (Expr, error) {
-	r, err := evalExpr(x.right)
-	if err != nil {
-		return nil, err
-	}
+import (
+	"reflect"
+)
+
+func evalUnaryExpr(x *UnaryExpr) Expr {
+	r := reduceExpr(x.right)
 
 	int64Ops := map[tokenKind](func(int64) int64){
 		tokenPlus:  func(a int64) int64 { return a },
@@ -23,32 +24,26 @@ func evalUnaryExpr(x *UnaryExpr) (Expr, error) {
 	case tokenPlus:
 		fallthrough
 	case tokenMinus:
-		return &IntExpr{expr{&IntType{typ{}}}, int64Ops[x.op](r.(*IntExpr).v)}, nil
+		return &IntExpr{expr{&IntType{typ{}}}, int64Ops[x.op](r.(*IntExpr).v)}
 
 	case tokenFPlus:
 		fallthrough
 	case tokenFMinus:
-		return &FloatExpr{expr{&FloatType{typ{}}}, float64Ops[x.op](r.(*FloatExpr).v)}, nil
+		return &FloatExpr{expr{&FloatType{typ{}}}, float64Ops[x.op](r.(*FloatExpr).v)}
 
 	case tokenExcl:
-		return &BoolExpr{expr{&BoolType{typ{}}}, !r.(*BoolExpr).v}, nil
+		return &BoolExpr{expr{&BoolType{typ{}}}, !r.(*BoolExpr).v}
 
 	default:
 		panic("TODO: " + x.op.String())
 	}
 
-	return nil, nil
+	return nil
 }
 
-func evalBinaryExpr(x *BinaryExpr) (Expr, error) {
-	l, err := evalExpr(x.left)
-	if err != nil {
-		return nil, err
-	}
-	r, err := evalExpr(x.right)
-	if err != nil {
-		return nil, err
-	}
+func evalBinaryExpr(x *BinaryExpr) Expr {
+	l := reduceExpr(x.left)
+	r := reduceExpr(x.right)
 
 	int64Ops := map[tokenKind](func(int64, int64) int64){
 		tokenPlus:  func(a, b int64) int64 { return a + b },
@@ -95,7 +90,7 @@ func evalBinaryExpr(x *BinaryExpr) (Expr, error) {
 	case tokenSlash:
 		return &IntExpr{expr{&IntType{typ{}}},
 			int64Ops[x.op](l.(*IntExpr).v, r.(*IntExpr).v),
-		}, nil
+		}
 
 	case tokenLess:
 		fallthrough
@@ -106,7 +101,7 @@ func evalBinaryExpr(x *BinaryExpr) (Expr, error) {
 	case tokenMoreEq:
 		return &BoolExpr{expr{&BoolType{typ{}}},
 			int64CmpOps[x.op](l.(*IntExpr).v, r.(*IntExpr).v),
-		}, nil
+		}
 
 	case tokenFPlus:
 		fallthrough
@@ -117,7 +112,7 @@ func evalBinaryExpr(x *BinaryExpr) (Expr, error) {
 	case tokenFSlash:
 		return &FloatExpr{expr{&FloatType{typ{}}},
 			float64Ops[x.op](l.(*FloatExpr).v, r.(*FloatExpr).v),
-		}, nil
+		}
 
 	case tokenFLess:
 		fallthrough
@@ -128,14 +123,14 @@ func evalBinaryExpr(x *BinaryExpr) (Expr, error) {
 	case tokenFMoreEq:
 		return &BoolExpr{expr{&BoolType{typ{}}},
 			float64CmpOps[x.op](l.(*FloatExpr).v, r.(*FloatExpr).v),
-		}, nil
+		}
 
 	case tokenAndAnd:
 		fallthrough
 	case tokenOrOr:
 		return &BoolExpr{expr{&BoolType{typ{}}},
 			boolOps[x.op](l.(*BoolExpr).v, r.(*BoolExpr).v),
-		}, nil
+		}
 
 	default:
 		panic("TODO: " + x.op.String())
@@ -259,29 +254,68 @@ func substituteExpr(x, y Expr, a string) Expr {
 	return nil
 }
 
+func reduceExpr(x Expr) Expr {
+	switch x.(type) {
+	// NOTE: "cannot fallthrough in type switch"
+	case *UnitExpr:
+		return x
+
+	case *IntExpr:
+		return x
+
+	case *FloatExpr:
+		return x
+
+	case *BoolExpr:
+		return x
+
+	case *UnaryExpr:
+		return evalUnaryExpr(x.(*UnaryExpr))
+
+	case *BinaryExpr:
+		return evalBinaryExpr(x.(*BinaryExpr))
+
+	case *AbsExpr:
+		x.(*AbsExpr).right = reduceExpr(x.(*AbsExpr).right)
+		return x
+
+	case *VarExpr:
+		return x
+
+	case *AppExpr:
+		// XXX hmm, will those always been AbsEexpr?
+		if _, ok := x.(*AppExpr).left.(*AbsExpr); ok {
+			return substituteExpr(
+				x.(*AppExpr).left.(*AbsExpr).right,
+				x.(*AppExpr).right,
+				x.(*AppExpr).left.(*AbsExpr).name,
+			)
+		}
+		x.(*AppExpr).left = reduceExpr(x.(*AppExpr).left)
+		x.(*AppExpr).right = reduceExpr(x.(*AppExpr).right)
+		return x
+
+	default:
+		panic("assert")
+	}
+}
+
 // NOTE: we're returning an Expr here.
 //
 // This is because computation is expected to stop on irreducible
 // lambda expressions at some point.
-func evalExpr(x Expr) (Expr, error) {
-	switch x.(type) {
-	// NOTE: "cannot fallthrough in type switch"
-	case *UnitExpr:
-		return x, nil
-	case *IntExpr:
-		return x, nil
-	case *FloatExpr:
-		return x, nil
-	case *BoolExpr:
-		return x, nil
-	case *UnaryExpr:
-		return evalUnaryExpr(x.(*UnaryExpr))
-	case *BinaryExpr:
-		return evalBinaryExpr(x.(*BinaryExpr))
-	default:
-		panic("assert")
+//
+// TODO: add a configurable timeout here
+func evalExpr(x Expr) Expr {
+	var y Expr
+
+	for {
+		y = reduceExpr(x)
+		if reflect.DeepEqual(x, y) {
+			return y
+		}
+		x = y
 	}
-	return nil, nil
 }
 
 // To ease tests so far
