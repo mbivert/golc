@@ -183,7 +183,9 @@ func isLetter(ch rune) bool {
 func (s *scanner) idOrName() tokenKind {
 	off := s.offset
 
-	for isLetter(s.ch) {
+	// we know that the first s.ch is a letter ≠ λ already,
+	// so we can look for numbers already
+	for (isLetter(s.ch) || isDigit(s.ch)) && s.ch != 'λ' {
 		s.next()
 	}
 

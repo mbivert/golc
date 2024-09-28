@@ -293,3 +293,19 @@ func TestScannerFCmpOp(t *testing.T) {
 		},
 	})
 }
+
+func TestScannerIdentifier(t *testing.T) {
+	ftests.Run(t, []ftests.Test{
+		{
+			"x0 y01",
+			scanAll,
+			[]any{"x0 y01λ", ""},
+			[]any{[]token{
+				token{tokenName,  1, 1, "x0"},
+				token{tokenName,  1, 4, "y01"},
+				token{tokenLambda, 1, 7, "λ"},
+				token{tokenEOF,    1, 8, ""},
+			}, nil},
+		},
+	})
+}
