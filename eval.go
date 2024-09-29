@@ -3,12 +3,10 @@
  */
 package main
 
-import (
-	"reflect"
-)
+import "fmt"
 
 func evalUnaryExpr(x *UnaryExpr) Expr {
-	r := reduceExpr(x.right)
+	r, _ := reduceExpr(x.right)
 
 	int64Ops := map[tokenKind](func(int64) int64){
 		tokenPlus:  func(a int64) int64 { return a },
@@ -42,8 +40,8 @@ func evalUnaryExpr(x *UnaryExpr) Expr {
 }
 
 func evalBinaryExpr(x *BinaryExpr) Expr {
-	l := reduceExpr(x.left)
-	r := reduceExpr(x.right)
+	l, _ := reduceExpr(x.left)
+	r, _ := reduceExpr(x.right)
 
 	int64Ops := map[tokenKind](func(int64, int64) int64){
 		tokenPlus:  func(a, b int64) int64 { return a + b },
@@ -254,46 +252,49 @@ func substituteExpr(x, y Expr, a string) Expr {
 	return nil
 }
 
-func reduceExpr(x Expr) Expr {
+func reduceExpr(x Expr) (Expr, bool) {
 	switch x.(type) {
 	// NOTE: "cannot fallthrough in type switch"
 	case *UnitExpr:
-		return x
+		return x, false
 
 	case *IntExpr:
-		return x
+		return x, false
 
 	case *FloatExpr:
-		return x
+		return x, false
 
 	case *BoolExpr:
-		return x
+		return x, false
 
 	case *UnaryExpr:
-		return evalUnaryExpr(x.(*UnaryExpr))
+		return evalUnaryExpr(x.(*UnaryExpr)), true
 
 	case *BinaryExpr:
-		return evalBinaryExpr(x.(*BinaryExpr))
+		return evalBinaryExpr(x.(*BinaryExpr)), true
 
 	case *AbsExpr:
-		x.(*AbsExpr).right = reduceExpr(x.(*AbsExpr).right)
-		return x
+		var b bool
+		x.(*AbsExpr).right, b = reduceExpr(x.(*AbsExpr).right)
+		return x, b
 
 	case *VarExpr:
-		return x
+		return x, false
 
 	case *AppExpr:
-		// XXX hmm, will those always been AbsEexpr?
+		// XXX hmm, will this always be an AbsEexpr?
 		if _, ok := x.(*AppExpr).left.(*AbsExpr); ok {
 			return substituteExpr(
 				x.(*AppExpr).left.(*AbsExpr).right,
 				x.(*AppExpr).right,
 				x.(*AppExpr).left.(*AbsExpr).name,
-			)
+			), true
 		}
-		x.(*AppExpr).left = reduceExpr(x.(*AppExpr).left)
-		x.(*AppExpr).right = reduceExpr(x.(*AppExpr).right)
-		return x
+		var bl, br bool
+
+		x.(*AppExpr).left, bl = reduceExpr(x.(*AppExpr).left)
+		x.(*AppExpr).right, br = reduceExpr(x.(*AppExpr).right)
+		return x, bl || br
 
 	default:
 		panic("assert")
@@ -306,13 +307,18 @@ func reduceExpr(x Expr) Expr {
 // lambda expressions at some point.
 //
 // TODO: add a configurable timeout here
+// TODO: termination detection feels clumsy as hell; we can't
+// compare x with y, as reduction will modify its input in-place.
 func evalExpr(x Expr) Expr {
 	var y Expr
+	var b bool
 
 	for {
-		y = reduceExpr(x)
-		if reflect.DeepEqual(x, y) {
-			return y
+		fmt.Printf("%s\n", x)
+		y, b = reduceExpr(x)
+
+		if !b {
+			return x
 		}
 		x = y
 	}

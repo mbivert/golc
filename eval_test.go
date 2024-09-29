@@ -421,6 +421,51 @@ func TestEvalLambdaMaths(t *testing.T) {
 	})
 }
 
+func TestEvalBasicLambda(t *testing.T) {
+	ftests.Run(t, []ftests.Test{
+		{
+			"variable",
+			evalExpr,
+			[]any{mustParse("x")},
+			[]any{
+				mustParse("x"),
+			},
+		},
+		{
+			"irreducible apply",
+			evalExpr,
+			[]any{mustParse("x y")},
+			[]any{
+				mustParse("x y"),
+			},
+		},
+		{
+			"irreducible applies",
+			evalExpr,
+			[]any{mustParse("x y z")},
+			[]any{
+				mustParse("x y z"),
+			},
+		},
+		{
+			"eval: function call, single arg",
+			evalExpr,
+			[]any{mustParse("(λx. x y) z")},
+			[]any{
+				mustParse("z y"),
+			},
+		},
+		{
+			"eval: function call, two args",
+			evalExpr,
+			[]any{mustParse("(λx. λy. x y) z z0")},
+			[]any{
+				mustParse("z z0"),
+			},
+		},
+	})
+}
+
 /*
 	D/diff i t
 
