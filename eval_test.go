@@ -1,6 +1,7 @@
 package main
 
 import (
+	"fmt"
 	"testing"
 
 	"github.com/mbivert/ftests"
@@ -448,7 +449,7 @@ func TestEvalBasicLambda(t *testing.T) {
 			},
 		},
 		{
-			"eval: function call, single arg",
+			"function call, single arg",
 			evalExpr,
 			[]any{mustParse("(λx. x y) z")},
 			[]any{
@@ -456,11 +457,162 @@ func TestEvalBasicLambda(t *testing.T) {
 			},
 		},
 		{
-			"eval: function call, two args",
+			"function call, two args",
 			evalExpr,
 			[]any{mustParse("(λx. λy. x y) z z0")},
 			[]any{
 				mustParse("z z0"),
+			},
+		},
+		{
+			"and T F == F",
+			evalExpr,
+			[]any{mustParse(fmt.Sprintf("(%s) (%s) (%s)", andStr, TStr, FStr))},
+			[]any{
+				F,
+			},
+		},
+		{
+			"and F T == F",
+			evalExpr,
+			[]any{mustParse(fmt.Sprintf("(%s) (%s) (%s)", andStr, FStr, TStr))},
+			[]any{
+				F,
+			},
+		},
+		{
+			"and F F == F",
+			evalExpr,
+			[]any{mustParse(fmt.Sprintf("(%s) (%s) (%s)", andStr, FStr, FStr))},
+			[]any{
+				F,
+			},
+		},
+		{
+			"and T T == T",
+			evalExpr,
+			[]any{mustParse(fmt.Sprintf("(%s) (%s) (%s)", andStr, TStr, TStr))},
+			[]any{
+				T,
+			},
+		},
+		{
+			"not F == T",
+			evalExpr,
+			[]any{mustParse(fmt.Sprintf("(%s) (%s)", notStr, FStr))},
+			[]any{
+				T,
+			},
+		},
+		{
+			"not T == F",
+			evalExpr,
+			[]any{mustParse(fmt.Sprintf("%s %s", notStr, TStr))},
+			[]any{
+				F,
+			},
+		},
+		{
+			"let ... in ... -like",
+			evalExpr,
+			[]any{mustParse(`
+				(
+					(λ zero.
+					(λ one.
+					(λ two.
+					(λ ifelse.
+					(λ iszero.
+					(
+						((ifelse (iszero one)) two) zero
+					)
+					) (λn. (λx. (λy. ((n (λz.y)) x))))
+					) (λp. (λx. (λy. ((p x) y))))
+					) (λf. (λx. (f (f x))))
+					) (λf. (λx. (f x)))
+					) (λf. (λx. x))
+				)
+			`)},
+			[]any{
+				mustParse("λf. (λx. x)"),
+			},
+		},
+		{
+			"eval: or T T == T (1)",
+			evalExpr,
+			[]any{mustParse(`
+				((λx. λy. x) (λx. λy. x) ((λx. λy. x) (λx. λy. x) (λx. λy. y)))
+			`)},
+			[]any{
+				T,
+			},
+		},
+		{
+			"eval: or T T == T (2)",
+			evalExpr,
+			[]any{mustParse(`
+				((λx. λy. x) (λx. λy. x)
+					(
+						(λp. λx. λy. p x y)
+						(λx. λy. x)
+						(λx. λy. x)
+						(λx. λy. y)))
+			`)},
+			[]any{
+				T,
+			},
+		},
+		{
+			"eval: or T T == T (3)",
+			evalExpr,
+			[]any{mustParse(`
+				(λy. ((λx. λy. x) (λx. λy. x) y))
+					(
+						(λp. λx. λy. p x y)
+						(λx. λy. x)
+						(λx. λy. x)
+						(λx. λy. y))
+			`)},
+			[]any{
+				T,
+			},
+		},
+		{
+			"eval: or T T == T (4)",
+			evalExpr,
+			[]any{mustParse(`
+				(λp. λx. λy. p x y)
+					(λx. λy. x)
+					(λx. λy. x)
+					(
+						(λp. λx. λy. p x y)
+						(λx. λy. x)
+						(λx. λy. x)
+						(λx. λy. y))
+			`)},
+			[]any{
+				T,
+			},
+		},
+		{
+			"let ... in ... -like (or T T)",
+			evalExpr,
+			[]any{mustParse(`
+				(
+					(λ ifelse.
+					(λ F.
+					(λ T.
+					(λ Or.
+					(
+						(Or T) T
+					)
+					) (λx. (λy. (((ifelse x) T) (((ifelse y) T) F))))
+					) (λx. (λy. x))
+					) (λx. (λy. y))
+					) (λp. (λx. (λy. ((p x) y))))
+				)
+			`)},
+			[]any{
+				T,
 			},
 		},
 	})
@@ -478,4 +630,4 @@ func TestEvalBasicLambda(t *testing.T) {
 
 	1 ∂ λ
 
- */
+*/

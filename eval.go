@@ -3,7 +3,10 @@
  */
 package main
 
-import "fmt"
+import (
+	"fmt"
+	"reflect"
+)
 
 func evalUnaryExpr(x *UnaryExpr) Expr {
 	r, _ := reduceExpr(x.right)
@@ -187,6 +190,103 @@ func renameExpr(x Expr, b, a string) Expr {
 	return nil
 }
 
+func copyType(t Type) Type {
+	switch t.(type) {
+	case *VarType:
+		return &VarType{typ{}, t.(*VarType).name}
+
+	case *ArrowType:
+		return &ArrowType{
+			typ{},
+			copyType(t.(*ArrowType).left),
+			copyType(t.(*ArrowType).right),
+		}
+
+	case *ProductType:
+		return &ProductType{
+			typ{},
+			copyType(t.(*ProductType).left),
+			copyType(t.(*ProductType).right),
+		}
+
+	// "iotas" (unit / primitive types)
+	case *UnitType:
+		return &UnitType{typ{}}
+	case *BoolType:
+		return &BoolType{typ{}}
+	case *IntType:
+		return &IntType{typ{}}
+	case *FloatType:
+		return &FloatType{typ{}}
+
+	default:
+		return &typ{}
+//		panic("O__o: "+reflect.ValueOf(t).Type().String())
+	}
+
+	return t
+}
+
+func copyExpr(x Expr) Expr {
+	switch x.(type) {
+	case *UnitExpr:
+		return &UnitExpr{expr{&UnitType{typ{}}}}
+	case *IntExpr:
+		return &IntExpr{expr{&IntType{typ{}}}, x.(*IntExpr).v}
+	case *FloatExpr:
+		return &FloatExpr{expr{&FloatType{typ{}}}, x.(*FloatExpr).v}
+	case *BoolExpr:
+		return &BoolExpr{expr{&BoolType{typ{}}}, x.(*BoolExpr).v}
+	case *ProductExpr:
+		return &ProductExpr{
+			expr{copyType(x.getType())},
+			copyExpr(x.(*ProductExpr).left),
+			copyExpr(x.(*ProductExpr).right),
+		}
+
+	case *UnaryExpr:
+		return &UnaryExpr{
+			expr{copyType(x.getType())},
+			x.(*UnaryExpr).op,
+			copyExpr(x.(*ProductExpr).right),
+		}
+
+	case *BinaryExpr:
+		return &BinaryExpr{
+			expr{copyType(x.getType())},
+			x.(*BinaryExpr).op,
+			copyExpr(x.(*BinaryExpr).left),
+			copyExpr(x.(*BinaryExpr).right),
+		}
+
+	case *AppExpr:
+		return &AppExpr{
+			expr{copyType(x.getType())},
+			copyExpr(x.(*AppExpr).left),
+			copyExpr(x.(*AppExpr).right),
+		}
+
+	case *VarExpr:
+		return &VarExpr{
+			expr{copyType(x.getType())},
+			x.(*VarExpr).name,
+		}
+
+	case *AbsExpr:
+		return &AbsExpr{
+			expr{copyType(x.getType())},
+			copyType(x.(*AbsExpr).typ),
+			x.(*AbsExpr).name,
+			copyExpr(x.(*AbsExpr).right),
+		}
+
+	default:
+		panic("assert")
+	}
+
+	return nil
+}
+
 // β-substitution: x[y/a]: substituing a for y in x
 func substituteExpr(x, y Expr, a string) Expr {
 	switch x.(type) {
@@ -219,7 +319,13 @@ func substituteExpr(x, y Expr, a string) Expr {
 
 	case *VarExpr:
 		if x.(*VarExpr).name == a {
-			return y
+			// NOTE/TODO: because substitution/evaluation
+			// are performed in-place, we can't just use the
+			// same y pointer for every occurence.
+			//
+			// However, if we knew they'd be only one use,
+			// then we could (optimization)
+			return copyExpr(y)
 		}
 		return x
 
@@ -238,7 +344,7 @@ func substituteExpr(x, y Expr, a string) Expr {
 		// conflict with what happens in y. Hence, we need
 		// to get a name which would conflict with nothing in
 		// x, y or a for that matter.
-		b := getFresh(allVars(x.(*AbsExpr).right), allVars(y), map[string]bool{a:true})
+		b := getFresh(allVars(x.(*AbsExpr).right), allVars(y), map[string]bool{a: true})
 		x.(*AbsExpr).name = b
 		x.(*AbsExpr).right = substituteExpr(
 			renameExpr(x.(*AbsExpr).right, b, name), y, a,
@@ -297,7 +403,7 @@ func reduceExpr(x Expr) (Expr, bool) {
 		return x, bl || br
 
 	default:
-		panic("assert")
+		panic("assert: " + reflect.ValueOf(x).Type().String())
 	}
 }
 

@@ -13,7 +13,7 @@ const (
 	eof = -1
 )
 
-var identifiers = map[string]tokenKind {
+var identifiers = map[string]tokenKind{
 	"and": tokenAndAnd,
 	"or":  tokenOrOr,
 

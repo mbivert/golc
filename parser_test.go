@@ -102,6 +102,74 @@ func (e *UnaryExpr) MarshalJSON() ([]byte, error) {
 	})
 }
 
+// unexported fields are unavailable to the json
+// package, and thus aren't visible in tests...
+func (t *IntType) MarshalJSON() ([]byte, error) {
+	return json.Marshal(struct {
+		T string
+	}{
+		T: "int",
+	})
+}
+
+func (t *FloatType) MarshalJSON() ([]byte, error) {
+	return json.Marshal(struct {
+		T string
+	}{
+		T: "float",
+	})
+}
+
+func (t *BoolType) MarshalJSON() ([]byte, error) {
+	return json.Marshal(struct {
+		T string
+	}{
+		T: "bool",
+	})
+}
+
+func (t *UnitType) MarshalJSON() ([]byte, error) {
+	return json.Marshal(struct {
+		T string
+	}{
+		T: "unit",
+	})
+}
+
+func (t *ArrowType) MarshalJSON() ([]byte, error) {
+	return json.Marshal(struct {
+		T     string
+		Left  Type
+		Right Type
+	}{
+		T:     "arrow",
+		Left:  t.left,
+		Right: t.right,
+	})
+}
+
+func (t *ProductType) MarshalJSON() ([]byte, error) {
+	return json.Marshal(struct {
+		T     string
+		Left  Type
+		Right Type
+	}{
+		T:     "product",
+		Left:  t.left,
+		Right: t.right,
+	})
+}
+
+func (t *VarType) MarshalJSON() ([]byte, error) {
+	return json.Marshal(struct {
+		T    string
+		Name string
+	}{
+		T:     "var",
+		Name:  t.name,
+	})
+}
+
 /*
  * Many of those tests are recycled from
  *	https://github.com/mbivert/nix-series-code/blob/master/lambda/parse_test.nix

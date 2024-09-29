@@ -301,10 +301,10 @@ func TestScannerIdentifier(t *testing.T) {
 			scanAll,
 			[]any{"x0 y01λ", ""},
 			[]any{[]token{
-				token{tokenName,  1, 1, "x0"},
-				token{tokenName,  1, 4, "y01"},
+				token{tokenName, 1, 1, "x0"},
+				token{tokenName, 1, 4, "y01"},
 				token{tokenLambda, 1, 7, "λ"},
-				token{tokenEOF,    1, 8, ""},
+				token{tokenEOF, 1, 8, ""},
 			}, nil},
 		},
 	})

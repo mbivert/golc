@@ -5,6 +5,12 @@ import (
 	"strconv"
 )
 
+var TStr = "(λx.λy. x)"
+var FStr = "(λx.λy. y)"
+var andStr = fmt.Sprintf("(λx.λy. (x y) %s)", FStr)
+var ifelseStr = "(λp. λx. λy. p x y)"
+var notStr = fmt.Sprintf("(λx. %s x %s %s)", ifelseStr, FStr, TStr)
+
 // True
 var T = &AbsExpr{
 	expr{},

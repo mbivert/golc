@@ -270,7 +270,7 @@ func (e *ProductExpr) String() string {
 
 type parser struct {
 	scanner
-	tok token
+	tok  token
 	errf func(string, ...interface{})
 }
 
