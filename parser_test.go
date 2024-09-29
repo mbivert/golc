@@ -12,42 +12,50 @@ import (
 // package, and thus aren't visible in tests...
 func (e *IntExpr) MarshalJSON() ([]byte, error) {
 	return json.Marshal(struct {
-		T string
+		D string
+		T Type
 		V int64
 	}{
-		T: "int",
+		D: "int",
+		T: e.getType(),
 		V: e.v,
 	})
 }
 
 func (e *FloatExpr) MarshalJSON() ([]byte, error) {
 	return json.Marshal(struct {
-		T string
+		D string
+		T Type
 		V float64
 	}{
-		T: "float",
+		D: "float",
+		T: e.getType(),
 		V: e.v,
 	})
 }
 
 func (e *BoolExpr) MarshalJSON() ([]byte, error) {
 	return json.Marshal(struct {
-		T string
+		D string
+		T Type
 		V bool
 	}{
-		T: "bool",
+		D: "bool",
+		T: e.getType(),
 		V: e.v,
 	})
 }
 
 func (e *AbsExpr) MarshalJSON() ([]byte, error) {
 	return json.Marshal(struct {
-		T     string
+		D     string
+		T     Type
 		Typ   Type
 		Name  string
 		Right Expr
 	}{
-		T:     "abs",
+		D:     "abs",
+		T:     e.getType(),
 		Typ:   e.typ,
 		Name:  e.name,
 		Right: e.right,
@@ -56,11 +64,13 @@ func (e *AbsExpr) MarshalJSON() ([]byte, error) {
 
 func (e *AppExpr) MarshalJSON() ([]byte, error) {
 	return json.Marshal(struct {
-		T     string
+		D     string
+		T     Type
 		Left  Expr
 		Right Expr
 	}{
-		T:     "app",
+		D:     "app",
+		T:     e.getType(),
 		Left:  e.left,
 		Right: e.right,
 	})
@@ -68,22 +78,26 @@ func (e *AppExpr) MarshalJSON() ([]byte, error) {
 
 func (e *VarExpr) MarshalJSON() ([]byte, error) {
 	return json.Marshal(struct {
-		T    string
+		D    string
+		T    Type
 		Name string
 	}{
-		T:    "var",
+		D:    "var",
+		T:    e.getType(),
 		Name: e.name,
 	})
 }
 
 func (e *BinaryExpr) MarshalJSON() ([]byte, error) {
 	return json.Marshal(struct {
-		T     string
+		D     string
+		T     Type
 		Op    string
 		Left  Expr
 		Right Expr
 	}{
-		T:     "bin",
+		D:     "bin",
+		T:     e.getType(),
 		Op:    e.op.String(),
 		Left:  e.left,
 		Right: e.right,
@@ -92,11 +106,13 @@ func (e *BinaryExpr) MarshalJSON() ([]byte, error) {
 
 func (e *UnaryExpr) MarshalJSON() ([]byte, error) {
 	return json.Marshal(struct {
-		T     string
+		D     string
+		T     Type
 		Op    string
 		Right Expr
 	}{
-		T:     "una",
+		D:     "una",
+		T:     e.getType(),
 		Op:    e.op.String(),
 		Right: e.right,
 	})

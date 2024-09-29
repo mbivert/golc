@@ -219,8 +219,11 @@ func copyType(t Type) Type {
 	case *FloatType:
 		return &FloatType{typ{}}
 
-	default:
+	case *typ:
 		return &typ{}
+
+	default:
+		return nil
 //		panic("O__o: "+reflect.ValueOf(t).Type().String())
 	}
 
@@ -230,13 +233,13 @@ func copyType(t Type) Type {
 func copyExpr(x Expr) Expr {
 	switch x.(type) {
 	case *UnitExpr:
-		return &UnitExpr{expr{&UnitType{typ{}}}}
+		return &UnitExpr{expr{copyType(x.getType())}}
 	case *IntExpr:
-		return &IntExpr{expr{&IntType{typ{}}}, x.(*IntExpr).v}
+		return &IntExpr{expr{copyType(x.getType())}, x.(*IntExpr).v}
 	case *FloatExpr:
-		return &FloatExpr{expr{&FloatType{typ{}}}, x.(*FloatExpr).v}
+		return &FloatExpr{expr{copyType(x.getType())}, x.(*FloatExpr).v}
 	case *BoolExpr:
-		return &BoolExpr{expr{&BoolType{typ{}}}, x.(*BoolExpr).v}
+		return &BoolExpr{expr{copyType(x.getType())}, x.(*BoolExpr).v}
 	case *ProductExpr:
 		return &ProductExpr{
 			expr{copyType(x.getType())},
