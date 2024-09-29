@@ -537,63 +537,6 @@ func TestEvalBasicLambda(t *testing.T) {
 			},
 		},
 		{
-			"eval: or T T == T (1)",
-			evalExpr,
-			[]any{mustParse(`
-				((λx. λy. x) (λx. λy. x) ((λx. λy. x) (λx. λy. x) (λx. λy. y)))
-			`)},
-			[]any{
-				T,
-			},
-		},
-		{
-			"eval: or T T == T (2)",
-			evalExpr,
-			[]any{mustParse(`
-				((λx. λy. x) (λx. λy. x)
-					(
-						(λp. λx. λy. p x y)
-						(λx. λy. x)
-						(λx. λy. x)
-						(λx. λy. y)))
-			`)},
-			[]any{
-				T,
-			},
-		},
-		{
-			"eval: or T T == T (3)",
-			evalExpr,
-			[]any{mustParse(`
-				(λy. ((λx. λy. x) (λx. λy. x) y))
-					(
-						(λp. λx. λy. p x y)
-						(λx. λy. x)
-						(λx. λy. x)
-						(λx. λy. y))
-			`)},
-			[]any{
-				T,
-			},
-		},
-		{
-			"eval: or T T == T (4)",
-			evalExpr,
-			[]any{mustParse(`
-				(λp. λx. λy. p x y)
-					(λx. λy. x)
-					(λx. λy. x)
-					(
-						(λp. λx. λy. p x y)
-						(λx. λy. x)
-						(λx. λy. x)
-						(λx. λy. y))
-			`)},
-			[]any{
-				T,
-			},
-		},
-		{
 			"let ... in ... -like (or T T)",
 			evalExpr,
 			[]any{mustParse(`
@@ -613,6 +556,251 @@ func TestEvalBasicLambda(t *testing.T) {
 			`)},
 			[]any{
 				T,
+			},
+		},
+		{
+			"or T T == T (1)",
+			evalExpr,
+			[]any{mustParse(`
+				((λx. λy. x) (λx. λy. x) ((λx. λy. x) (λx. λy. x) (λx. λy. y)))
+			`)},
+			[]any{
+				T,
+			},
+		},
+		{
+			"or T T == T (2)",
+			evalExpr,
+			[]any{mustParse(`
+				((λx. λy. x) (λx. λy. x)
+					(
+						(λp. λx. λy. p x y)
+						(λx. λy. x)
+						(λx. λy. x)
+						(λx. λy. y)))
+			`)},
+			[]any{
+				T,
+			},
+		},
+		{
+			"or T T == T (3)",
+			evalExpr,
+			[]any{mustParse(`
+				(λy. ((λx. λy. x) (λx. λy. x) y))
+					(
+						(λp. λx. λy. p x y)
+						(λx. λy. x)
+						(λx. λy. x)
+						(λx. λy. y))
+			`)},
+			[]any{
+				T,
+			},
+		},
+		{
+			"or T T == T (4)",
+			evalExpr,
+			[]any{mustParse(`
+				(λp. λx. λy. p x y)
+					(λx. λy. x)
+					(λx. λy. x)
+					(
+						(λp. λx. λy. p x y)
+						(λx. λy. x)
+						(λx. λy. x)
+						(λx. λy. y))
+			`)},
+			[]any{
+				T,
+			},
+		},
+		{
+			"or T T == T (5)",
+			evalExpr,
+			[]any{mustParse(fmt.Sprintf("%s %s %s", orStr, TStr, TStr))},
+			[]any{
+				T,
+			},
+		},
+		{
+			"or F T == T",
+			evalExpr,
+			[]any{mustParse(fmt.Sprintf("%s %s %s", orStr, FStr, TStr))},
+			[]any{
+				T,
+			},
+		},
+		{
+			"or T F == T",
+			evalExpr,
+			[]any{mustParse(fmt.Sprintf("%s %s %s", orStr, TStr, FStr))},
+			[]any{
+				T,
+			},
+		},
+		{
+			"or F F == F",
+			evalExpr,
+			[]any{mustParse(fmt.Sprintf("%s %s %s", orStr, FStr, FStr))},
+			[]any{
+				F,
+			},
+		},
+		{
+			"xor F T == T",
+			evalExpr,
+			[]any{mustParse(fmt.Sprintf("%s %s %s", xorStr, FStr, TStr))},
+			[]any{
+				T,
+			},
+		},
+		{
+			"xor T F == T",
+			evalExpr,
+			[]any{mustParse(fmt.Sprintf("%s %s %s", xorStr, TStr, FStr))},
+			[]any{
+				T,
+			},
+		},
+		{
+			"xor F F == F",
+			evalExpr,
+			[]any{mustParse(fmt.Sprintf("%s %s %s", xorStr, FStr, FStr))},
+			[]any{
+				F,
+			},
+		},
+		{
+			"xor T T == F",
+			evalExpr,
+			[]any{mustParse(fmt.Sprintf("%s %s %s", xorStr, TStr, TStr))},
+			[]any{
+				F,
+			},
+		},
+		{
+			"succ zero == one",
+			evalExpr,
+			[]any{mustParse(fmt.Sprintf("%s %s", succStr, zeroStr))},
+			[]any{
+				mustParse(oneStr),
+			},
+		},
+		{
+			"succ (succ one) == three",
+			evalExpr,
+			[]any{mustParse(fmt.Sprintf("%s (%s %s)", succStr, succStr, oneStr))},
+			[]any{
+				mustParse(threeStr),
+			},
+		},
+		{
+			"add two three == add three two",
+			evalExpr,
+			[]any{mustParse(fmt.Sprintf("%s %s %s", addStr, twoStr, threeStr))},
+			[]any{
+				evalExpr(mustParse(fmt.Sprintf("%s %s %s", addStr, threeStr, twoStr))),
+			},
+		},
+		{
+			"mult two three == add three three",
+			evalExpr,
+			[]any{mustParse(fmt.Sprintf("%s %s %s", multStr, twoStr, threeStr))},
+			[]any{
+				evalExpr(mustParse(fmt.Sprintf("%s %s %s", addStr, threeStr, threeStr))),
+			},
+		},
+		{
+			"iszero zero == T",
+			evalExpr,
+			[]any{mustParse(fmt.Sprintf("%s %s", iszeroStr, zeroStr))},
+			[]any{
+				T,
+			},
+		},
+		{
+			"iszero one == T",
+			evalExpr,
+			[]any{mustParse(fmt.Sprintf("%s %s", iszeroStr, oneStr))},
+			[]any{
+				F,
+			},
+		},
+		{
+			"iszero three == T",
+			evalExpr,
+			[]any{mustParse(fmt.Sprintf("%s %s", iszeroStr, threeStr))},
+			[]any{
+				F,
+			},
+		},
+		{
+			"pred one == zero",
+			evalExpr,
+			[]any{mustParse(fmt.Sprintf("%s %s", predStr, oneStr))},
+			[]any{
+				mustParse(zeroStr),
+			},
+		},
+		{
+			"pred two == one",
+			evalExpr,
+			[]any{mustParse(fmt.Sprintf("%s %s", predStr, twoStr))},
+			[]any{
+				mustParse(oneStr),
+			},
+		},
+		{
+			"pred (pred three) == one",
+			evalExpr,
+			[]any{mustParse(fmt.Sprintf("%s (%s %s)", predStr, predStr, threeStr))},
+			[]any{
+				mustParse(oneStr),
+			},
+		},
+		{
+			"fact zero == one",
+			evalExpr,
+			[]any{mustParse(fmt.Sprintf("%s %s", factStr, zeroStr))},
+			[]any{
+				mustParse(oneStr),
+			},
+		},
+		{
+			"fact one == one",
+			evalExpr,
+			[]any{mustParse(fmt.Sprintf("%s %s", factStr, oneStr))},
+			[]any{
+				mustParse(oneStr),
+			},
+		},
+		{
+			"fact two == two",
+			evalExpr,
+			[]any{mustParse(fmt.Sprintf("%s %s", factStr, twoStr))},
+			[]any{
+				mustParse(twoStr),
+			},
+		},
+		{
+			"fact three == three * two * one == six",
+			evalExpr,
+			[]any{mustParse(fmt.Sprintf("%s %s", factStr, threeStr))},
+			[]any{
+				evalExpr(mustParse(fmt.Sprintf("%s %s %s", multStr, threeStr, twoStr))),
+			},
+		},
+		{
+			"fact four == four * three * two",
+			evalExpr,
+			[]any{mustParse(fmt.Sprintf("%s %s", factStr, fourStr))},
+			[]any{
+				evalExpr(mustParse(
+					fmt.Sprintf("(%s (%s (%s %s %s) %s) %s)",
+						multStr, multStr, addStr, threeStr, oneStr,
+						threeStr, twoStr,
+						))),
 			},
 		},
 	})

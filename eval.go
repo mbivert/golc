@@ -4,7 +4,7 @@
 package main
 
 import (
-	"fmt"
+	// "fmt"
 	"reflect"
 )
 
@@ -423,7 +423,7 @@ func evalExpr(x Expr) Expr {
 	var b bool
 
 	for {
-		fmt.Printf("%s\n", x)
+		// fmt.Printf("%s\n", x)
 		y, b = reduceExpr(x)
 
 		if !b {

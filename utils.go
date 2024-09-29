@@ -5,12 +5,6 @@ import (
 	"strconv"
 )
 
-var TStr = "(λx.λy. x)"
-var FStr = "(λx.λy. y)"
-var andStr = fmt.Sprintf("(λx.λy. (x y) %s)", FStr)
-var ifelseStr = "(λp. λx. λy. p x y)"
-var notStr = fmt.Sprintf("(λx. %s x %s %s)", ifelseStr, FStr, TStr)
-
 // True
 var T = &AbsExpr{
 	expr{},
@@ -56,6 +50,50 @@ var and = &AbsExpr{
 		},
 	},
 }
+
+var TStr = "(λx.λy. x)"
+var FStr = "(λx.λy. y)"
+var andStr = fmt.Sprintf("(λx.λy. (x y) %s)", FStr)
+var ifelseStr = "(λp. λx. λy. p x y)"
+var notStr = fmt.Sprintf("(λx. %s x %s %s)", ifelseStr, FStr, TStr)
+var orStr = fmt.Sprintf(`
+		(λx. λy.
+			%s
+			x
+			%s
+			(%s y %s %s))
+	`, ifelseStr, TStr, ifelseStr, TStr, FStr)
+var xorStr = fmt.Sprintf(`
+		(λx. λy.
+			(%s x
+				(%s y %s %s)
+				(%s y %s %s)))
+	`, ifelseStr, ifelseStr, FStr, TStr, ifelseStr, TStr, FStr)
+
+var zeroStr  = "(λf. λx. x)"
+var oneStr   = "(λf. λx. f x)"
+var twoStr   = "(λf. λx. f (f x))"
+var threeStr = "(λf. λx. f (f (f x)))"
+var fourStr  = "(λf. λx. f (f (f (f x))))"
+
+var succStr  = "(λn. λf. λx. f (n f x))"
+var addStr   = "(λn. λm. λf. λx. n f (m f x))"
+var multStr  = "(λn. λm. λf. n (m f))"
+
+var iszeroStr = "(λn. λx. λy. n (λz.y) x)"
+
+var predStr   = "(λn.λf.λx. n (λg.λh. h (g f)) (λu.x) (λu.u))"
+
+var AStr   = "(λx. λy. y (x x y))"
+var TFPStr = fmt.Sprintf("(%s %s)", AStr, AStr)
+
+var FfactStr = fmt.Sprintf(`
+		(λf.λn.
+			(%s) (%s n)
+				(%s)
+				(%s n (f (%s n))))
+	`, ifelseStr, iszeroStr, oneStr, multStr, predStr);
+var factStr = fmt.Sprintf("(%s %s)", TFPStr, FfactStr)
 
 // Compute all free variables within a given expression
 // NOTE: this is more efficient than the previous version,

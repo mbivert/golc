@@ -5,7 +5,6 @@ Okay so far:
   - Simple typing, assuming everything is correctly annotated
 
 TODO:
-  - Import evaluation tests
   - Benchmark; if relevant, look to implement de Bruijn indexes
   - Entry point (e.g. a REPL)
   - Manage other quantum extensions
